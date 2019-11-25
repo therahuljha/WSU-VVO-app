@@ -153,6 +153,7 @@ class SwitchingActions(object):
                 # calling VVO
                 d = PowerData(self.msr_mrids_demand,message)
                 platformload = d.demand()
+                print('Platform Load is obtained....')
                 capreg_st = WSUVVO()
                 statusO_c, statusO_r = capreg_st.VVO9500(self.LineData, platformload)
                 print('\n \n ........................')
