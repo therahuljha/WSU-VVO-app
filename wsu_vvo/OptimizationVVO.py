@@ -53,7 +53,7 @@ class WSUVVO(object):
         CVRP = 0.6
         CVRQ = 3
         tap_r1 = 33
-        # loadmult = 0.285
+        loadmult = 1
             
         # Different variables for optimization function
         si = LpVariable.dicts("s_i", ((i) for i in range(nNodes) ), lowBound=0, upBound=1, cat='Binary')
@@ -65,9 +65,9 @@ class WSUVVO(object):
         Qija = LpVariable.dicts("xQa", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijb = LpVariable.dicts("xQb", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijc = LpVariable.dicts("xQc", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
-        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
-        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
-        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
+        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
+        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
+        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
         tapi1 = LpVariable.dicts("xtap1", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi2 = LpVariable.dicts("xtap2", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi3 = LpVariable.dicts("xtap3", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
@@ -379,62 +379,68 @@ class WSUVVO(object):
 
         print ('Solving the VVO problem..........')
         # Call solver 
-        prob.solve()
-        # prob.solve(CPLEX(msg=0))
+        # prob.solve()
+        prob.solve(CPLEX(msg=1))
         prob.writeLP("Check.lp")
         print ("Status:", LpStatus[prob.status])
-        print(Pija[0].varValue, Pijb[0].varValue, Pijc[0].varValue )
-        print(Pija[0].varValue + Pijb[0].varValue + Pijc[0].varValue)
-        print ('..........')
-        print(Qija[0].varValue, Qijb[0].varValue, Qijc[0].varValue )
-        print(Qija[0].varValue + Qijb[0].varValue + Qijc[0].varValue)
-        print ('..........')
+        # print(Pija[0].varValue, Pijb[0].varValue, Pijc[0].varValue )
+        # print(Pija[0].varValue + Pijb[0].varValue + Pijc[0].varValue)
+        # print ('..........')
+        # print(Qija[0].varValue, Qijb[0].varValue, Qijc[0].varValue )
+        # print(Qija[0].varValue + Qijb[0].varValue + Qijc[0].varValue)
+        # print ('..........')
 
         # Each substation power flow
-        print(' Substation #1:', Pija[4].varValue, Pijb[4].varValue, Pijc[4].varValue )
-        print(' Substation #2:', Pija[27].varValue, Pijb[27].varValue, Pijc[27].varValue )
-        print(' Substation #3:', Pija[34].varValue, Pijb[34].varValue, Pijc[34].varValue )
-        print ('..........')
-        print(' Tie Switch Status:')        
-        for k in range(len(No)):
-            print(xij[No[k]].varValue)
+        # print(' Substation #1:', Pija[4].varValue, Pijb[4].varValue, Pijc[4].varValue )
+        # print(' Substation #2:', Pija[27].varValue, Pijb[27].varValue, Pijc[27].varValue )
+        # print(' Substation #3:', Pija[34].varValue, Pijb[34].varValue, Pijc[34].varValue )
+        # print ('..........')
+        # print(' Tie Switch Status:')        
+        # for k in range(len(No)):
+        #     print(xij[No[k]].varValue)
         
         taps = []
         for i in range(tap_r1):
             if tapi1[i].varValue == 1:
                 print(i,tapi1[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
 
             if tapi2[i].varValue == 1:
                 print(i,tapi2[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
+
                 
             if tapi3[i].varValue == 1:
                 print(i,tapi3[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
+
                
             if tapi4[i].varValue == 1:
                 print(i,tapi4[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
                
             if tapi5[i].varValue == 1:
                 print(i,tapi5[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
                
             if tapi6[i].varValue == 1:
                 print(i,tapi6[i].varValue)
-                taps.append(k-17)
+                taps.append(i-17)
+                taps.append(i-17)
+                taps.append(i-17)
                
         status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
               swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
+        # status_c = [0,0,0,1,0,0, 0,0,1,0,0,0]
         status_r = taps
         return status_c, status_r        
-#         for i in range(tap_r1):
-#             if tapi1[i].varValue > 0.9:
-#                 print(i,tapi1[i].varValue)
-# #        reguind = [7, 9, 31, 34,38,42, 1525,1551, 2023,2044,998, 1015]
-#         print(np.sqrt(Via[7].varValue),np.sqrt(Via[9].varValue),np.sqrt(Via[31].varValue),np.sqrt(Via[34].varValue),\
-#               np.sqrt(Via[38].varValue),np.sqrt(Via[42].varValue),np.sqrt(Via[1525].varValue),np.sqrt(Via[1551].varValue),\
-#               np.sqrt(Via[2023].varValue),np.sqrt(Via[2044].varValue),np.sqrt(Via[998].varValue),np.sqrt(Via[1015].varValue))
-#         print(swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
-#               swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue)

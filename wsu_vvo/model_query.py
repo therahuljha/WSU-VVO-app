@@ -123,7 +123,8 @@ class MODEL_EQ(object):
             message = dict(bus = ld['bus']['value'],
                         Phase  = name[-1].upper(),
                         kW = 0.001 *  float (ld['p']['value']),
-                        kVaR = 0.001 * float(ld['q']['value']))
+                        kVaR = 0.001 * float(ld['q']['value']),
+                        kVaR_C = 0)
             LoadData.append(message)   
         print('Load..')
         # sP = 0.

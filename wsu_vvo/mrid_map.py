@@ -8,11 +8,13 @@ class SW_MRID(object):
     """
     WSU VVO. Mapping Switch MRIDs
     """
-    def __init__(self, op, cl, switches, LineData):
+    def __init__(self, op, cl, switches, LineData,capacitor, regulator):
         self.op = op
         self.cl = cl
         self.switches = switches
         self.LineData = LineData
+        self.capacitor = capacitor
+        self.regulator = regulator
         
     def mapping_res(self):
         op_mrid = []

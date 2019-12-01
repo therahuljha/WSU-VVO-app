@@ -14,6 +14,7 @@ class PowerData(object):
     def __init__(self, msr_mrids_load, sim_output,xmfr):
         self.meas_load = msr_mrids_load
         self.output = sim_output
+        self.xmfr = xmfr
         
     def demand(self):
         data1 = self.meas_load
@@ -40,7 +41,8 @@ class PowerData(object):
                                 VA = [pq['magnitude'], pq['angle']],
                                 Phase = phase,
                                 kW = 0.001 * pq['magnitude']*np.cos(phi),
-                                kVaR = 0.001* pq['magnitude']*np.sin(phi))
+                                kVaR = 0.001* pq['magnitude']*np.sin(phi),
+                                kVaR_C = 0)
                 Demand.append(message)    
 
         # Combine the dictionary from S1 and S2 to balanced load. 
@@ -55,7 +57,7 @@ class PowerData(object):
         for ld in Demand:
             node = ld['bus'].strip('s')
             # Find this node in Xfrm to_br
-            for tr in Xfmr:
+            for tr in self.xmfr:
                 sec = tr['bus2']
                 if sec == node:
                     # Transfer this load to primary and change the node name
@@ -72,6 +74,21 @@ class PowerData(object):
         
         with open('PlatformD.json', 'w') as json_file:
             json.dump(Demand, json_file)
+
+        
+        cap_bus_ind = ['R42246', 'R42246', 'R42246', 'R42247' , 'R42247' , 'R42247' , 'R20185' , 'R20185' , 'R20185' ,'R18242', 'R18242','R18242']
+        cap_bus_phase = ['A', 'B', 'C','A', 'B', 'C','A', 'B', 'C','A', 'B', 'C']
+        cap_kvar_value = [400, 400, 400, 300, 300, 300, 300, 300, 300, 300, 300, 300]
+
+        for i in range(12):
+            # print(cap_bus_phase[i])
+            cap1 = dict(
+                bus = cap_bus_ind[i],
+                Phase = cap_bus_phase[i],
+                kW = 0,
+                kVaR = 0,
+                kVaR_C = cap_kvar_value [i])
+            Demand.append(cap1)
 
         return Demand
 
