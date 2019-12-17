@@ -55,13 +55,15 @@ from OptimizationVVO import WSUVVO
 # from mrid_map import SW_MRID
 from legacy_dev_status import LEGACY_DEV
 from model_query import MODEL_EQ
+from top_identify import Topology
+
 
 
 from gridappsd import GridAPPSD, DifferenceBuilder, utils, GOSS, topics
 from gridappsd.topics import simulation_input_topic, simulation_output_topic, simulation_log_topic, simulation_output_topic
 
-DEFAULT_MESSAGE_PERIOD = 5
-message_period = 10
+DEFAULT_MESSAGE_PERIOD = 15
+message_period = 30
 
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
 
@@ -77,7 +79,7 @@ class SwitchingActions(object):
     message to the simulation_input_topic with the forward and reverse difference specified.
     """
 
-    def __init__(self, simulation_id, gridappsd_obj, reg_list, cap_list,  demand, line, xfmr,msr_mrids_demand,msr_mrids_cap,msr_mrids_reg):
+    def __init__(self, simulation_id, gridappsd_obj, reg_list, cap_list,  demand, line, xfmr,msr_mrids_demand,msr_mrids_cap,msr_mrids_reg,obj_msr_loadsw,switches):
        
         """ Create a ``CapacitorToggler`` object
 
@@ -107,10 +109,12 @@ class SwitchingActions(object):
         self._store = []
         self._message_count = 0
         self._last_toggle_on = False
-        self._open_diff = DifferenceBuilder(simulation_id)
-        self._close_diff = DifferenceBuilder(simulation_id)
+        self._cap_open_diff = DifferenceBuilder(simulation_id)
+        self._cap_close_diff = DifferenceBuilder(simulation_id)
+        self._tap_open_diff = DifferenceBuilder(simulation_id)
+        self._tap_close_diff = DifferenceBuilder(simulation_id)
         self._publish_to_topic = simulation_input_topic(simulation_id)
-        # self.msr_mrids_loadsw = msr_mrids_loadsw
+        self.msr_mrids_loadsw = obj_msr_loadsw
         self.msr_mrids_demand = msr_mrids_demand
         self.msr_mrids_cap = msr_mrids_cap
         self.msr_mrids_reg = msr_mrids_reg
@@ -118,7 +122,10 @@ class SwitchingActions(object):
         self.DemandData  = demand
         self.xfmr  = xfmr
         self.TOP = []
+        self.switches = switches
+        self.flag = 0
         _log.info("Building cappacitor list")
+
 
         
     def on_message(self, headers, message):
@@ -134,6 +141,9 @@ class SwitchingActions(object):
             of ``GridAPPSD``.  Most message payloads will be serialized dictionaries, but that is
             not a requirement.
         """
+        if type(message) == str:
+            message = json.loads(message)
+
         if 'gridappsd-alarms' in headers['destination']:
             message = json.loads(message.replace("\'",""))
             for m in message:
@@ -141,52 +151,79 @@ class SwitchingActions(object):
             # print(s)
 
         else:
+            if not message['message']['measurements']:
+                return 
+                
             self._message_count += 1
             flag_fault = 0
             flag_event = 0
 
-            d = PowerData(self.msr_mrids_demand,message, self.xfmr)
+            Top = Topology(self.msr_mrids_loadsw, self.switches,message,self.LineData)
+            open_switch = Top.curr_top()
+            # print(open_switch)
+
+            d = PowerData(self.msr_mrids_demand,message, self.xfmr,self.LineData,open_switch)
             platformload = d.demand()
             print('Platform Load is obtained....')
 
+                            
+            with open('output.json', 'w') as json_file:
+                json.dump(message, json_file)
+            # print(messvar)  
+
+
             if self._message_count % message_period == 0:
+
+
                 no_opt = LEGACY_DEV(self.msr_mrids_cap,self.msr_mrids_reg, message) 
                 statusP_c = no_opt.cap_()
                 statusP_r = no_opt.reg_()
-                print('\n \n ........................')
-                print('Platform Status')
-                print('capacitor switch status', statusP_c)            
-                print('regulator tap position' , statusP_r)
-                print('........................\n \n')
+                # print('\n \n ........................')
+                # print('Platform Status')
+                # print('capacitor switch status', statusP_c)            
+                # print('regulator tap position' , statusP_r)
+                # print('........................\n \n')
 
                 # print(self.reg_list)
                 # calling VVO
 
                 capreg_st = WSUVVO()
-                statusO_c, statusO_r = capreg_st.VVO9500(self.LineData, platformload)
+                statusO_c, statusO_r = capreg_st.VVO9500(self.LineData, platformload,open_switch)
                 print('\n \n ........................')
                 print('Optimization results')
-                print( 'capacitor switch status', statusO_c,)
+                print( 'capacitor switch status', statusO_c)
                 print( 'regulator tap position', statusO_r)
                 print('........................\n \n')
+             
 
                 # total number of control variables are 12
-                ch = []
-                for m in range(10):
-                    if statusO_c[m] == 0:
-                        ch.append(self._cap_list[m])
+                # ch = []
+                # for m in range(10):
+                #     if statusO_c[m] == 0:
+                #         ch.append(self._cap_list[m])
 
 
-                for cap_mrid in ch:
-                    self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", 0, 1)
-                    msg = self._close_diff.get_message()
+                indx = 0
+                for cap_mrid in self._cap_list :
+                    if statusO_c[indx] == None:
+                        # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 1)
+                        # indx += 1
+                        self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 0)
+                        indx += 1                       
+                    else:
+                        # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 1)
+                        # indx += 1
+                        self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 0)
+                        indx += 1
+                    msg = self._cap_close_diff.get_message()
                     self._gapps.send(self._publish_to_topic, json.dumps(msg))
 
                 ind = 0
                 for reg_mrid in self.reg_list:
-                    self._close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
+                    # self._close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
+                    self._tap_close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
                     ind += 1
-                    msg = self._close_diff.get_message()
+                    msg = self._tap_close_diff.get_message()
                     self._gapps.send(self._publish_to_topic, json.dumps(msg))
 
 
@@ -218,26 +255,13 @@ def _main():
     gapps = GridAPPSD(opts.simulation_id, address=utils.get_gridappsd_address(),
                       username=utils.get_gridappsd_user(), password=utils.get_gridappsd_pass())
 
-    # Get measurement MRIDS for regulators in the feeder
+    # # Get measurement MRIDS for regulators in the feeder
     topic = "goss.gridappsd.process.request.data.powergridmodel"
-    message = {
-        "modelId": model_mrid,
-        "requestType": "QUERY_OBJECT_MEASUREMENTS",
-        "resultFormat": "JSON",
-        "objectType": "PowerTransformer"}     
-    obj_msr_reg = gapps.get_response(topic, message, timeout=90)
-
-    message = {
-        "modelId": model_mrid,
-        "requestType": "QUERY_OBJECT_MEASUREMENTS",
-        "resultFormat": "JSON",
-        "objectType": "LinearShuntCompensator"}     
-    obj_msr_cap = gapps.get_response(topic, message, timeout=90)
 
     # Run queries to get model information
     print('Get Model Information..... \n')   
     query = MODEL_EQ(gapps, model_mrid, topic)
-    obj_msr_loadsw, obj_msr_demand = query.meas_mrids()
+    obj_msr_loadsw, obj_msr_demand , obj_msr_reg, obj_msr_cap = query.meas_mrids()
     # print('Get Object MRIDS.... \n')
     switches = query.get_switches_mrids()
     regulator = query.get_regulators_mrids()
@@ -252,11 +276,6 @@ def _main():
         sP += float(l['kW'])
         sQ += float(l['kVaR'])   
 
-    # print((LoadData[0]))    
-        
-
-
-    # print("The Static kW and kVAR of the feeder is:", sP, sQ, "\n")
 
         # Load Line parameters
     with open('LineData.json', 'r') as read_file:
@@ -265,7 +284,7 @@ def _main():
     print("Initialize..... \n")
 
 
-    toggler = SwitchingActions(opts.simulation_id, gapps, regulator, capacitor, LoadData, line,xfmr,obj_msr_demand,obj_msr_cap, obj_msr_reg)
+    toggler = SwitchingActions(opts.simulation_id, gapps, regulator, capacitor, LoadData, line,xfmr,obj_msr_demand,obj_msr_cap, obj_msr_reg,obj_msr_loadsw,switches)
     print("Now subscribing")
     gapps.subscribe(listening_to_topic, toggler)
     while True:

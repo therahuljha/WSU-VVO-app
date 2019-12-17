@@ -73,9 +73,27 @@ class MODEL_EQ(object):
             "resultFormat": "JSON",
             "objectType": "EnergyConsumer"}     
         obj_msr_demand = self.gapps.get_response(self.topic, message, timeout=180)
+        
+        
+
+            # Get measurement MRIDS for regulators in the feeder
+        
+        message = {
+            "modelId": self.model_mrid,
+            "requestType": "QUERY_OBJECT_MEASUREMENTS",
+            "resultFormat": "JSON",
+            "objectType": "PowerTransformer"}     
+        obj_msr_reg = self.gapps.get_response(self.topic, message, timeout=180)
+        # print(obj_msr_reg)
+
+        message = {
+            "modelId": self.model_mrid,
+            "requestType": "QUERY_OBJECT_MEASUREMENTS",
+            "resultFormat": "JSON",
+            "objectType": "LinearShuntCompensator"}     
+        obj_msr_cap = self.gapps.get_response(self.topic, message, timeout=180)
         print('Gathering Measurement MRIDS.... \n')
-        return obj_msr_loadsw, obj_msr_demand
-    
+        return obj_msr_loadsw, obj_msr_demand, obj_msr_reg, obj_msr_cap
 
     def distLoad(self):
         query = """
@@ -364,7 +382,7 @@ class MODEL_EQ(object):
         return regulators
         with open('regulators.json', 'w') as outfile:
             json.dump(regulators, outfile)
-
+        print('regulators..')
 
     def get_capacitors_mrids(self):
         query = """
@@ -426,3 +444,5 @@ class MODEL_EQ(object):
         return capacitors
         with open('capacitors.json', 'w') as outfile:
             json.dump(capacitors, outfile)
+
+        print('capacitors..')

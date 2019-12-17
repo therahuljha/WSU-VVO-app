@@ -23,7 +23,7 @@ class WSUVVO(object):
         """
         pass        
    
-    def VVO9500 (self, Linepar, LoadData):    
+    def VVO9500 (self, Linepar, LoadData,open_switch):    
         
         # Find Tree and Planning model using Linepar
         G = nx.Graph()
@@ -65,9 +65,9 @@ class WSUVVO(object):
         Qija = LpVariable.dicts("xQa", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijb = LpVariable.dicts("xQb", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijc = LpVariable.dicts("xQc", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
-        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
-        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
-        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.71, upBound=1.2025, cat='Continous')
+        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
+        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
+        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
         tapi1 = LpVariable.dicts("xtap1", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi2 = LpVariable.dicts("xtap2", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi3 = LpVariable.dicts("xtap3", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
@@ -81,7 +81,7 @@ class WSUVVO(object):
         # Optimization problem objective definitions
         # Minimize the power flow from feeder 
        
-        No = [2745, 2746, 2747, 2748, 2749, 2750, 2751, 2752, 2753]
+        
         
         prob = LpProblem("CVRSW",LpMinimize)
         prob += Pija[0]+Pijb[0]+Pijc[0] 
@@ -190,17 +190,10 @@ class WSUVVO(object):
             ind1 = Nodes.index(n1)
             ind2 = Nodes.index(n2)   
             length = l['length']
-            Rmatrix =  list(np.zeros(9))
-            Xmatrix =  list(np.zeros(9))
-            if l['nPhase'] == 3:
-                Rmatrix = l['r']
-                Xmatrix = l['x']
-                r_aa,x_aa,r_ab,x_ab,r_ac,x_ac = Rmatrix[0], Xmatrix[0], Rmatrix[1], Xmatrix[1], Rmatrix[2], Xmatrix[2]
-            if l['nPhase'] == 1 and l['Phase'] == 'A':
-                r, x = l['r'], l['x']
-                Rmatrix[0], Xmatrix[0] =  r[0], x[0]
-                r_aa,x_aa,r_ab,x_ab,r_ac,x_ac = Rmatrix[0], Xmatrix[0], Rmatrix[1], Xmatrix[1], Rmatrix[2], Xmatrix[2]
-
+            Rmatrix =  l['r']
+            Xmatrix =  l['x']
+            r_aa,x_aa,r_ab,x_ab,r_ac,x_ac = Rmatrix[0], Xmatrix[0], Rmatrix[1], Xmatrix[1], Rmatrix[2], Xmatrix[2]
+            # Write voltage constraints
             if l['is_Switch'] == 1:
                 prob += Via[ind1]-Via[ind2] - \
                 2*r_aa*length/(unit*base_Z*1000)*Pija[k]- \
@@ -314,9 +307,12 @@ class WSUVVO(object):
             prob += Pija[s] >= 0
             prob += Pijb[s] >= 0
             prob += Pijc[s] >= 0
-            
+        
+        No = open_switch
+
         for t in No:
             prob += xij[t]==0
+        
         
         ## 3 regulator at substation and 3 are along the feeder
         
@@ -383,64 +379,49 @@ class WSUVVO(object):
         prob.solve(CPLEX(msg=1))
         prob.writeLP("Check.lp")
         print ("Status:", LpStatus[prob.status])
-        # print(Pija[0].varValue, Pijb[0].varValue, Pijc[0].varValue )
-        # print(Pija[0].varValue + Pijb[0].varValue + Pijc[0].varValue)
-        # print ('..........')
-        # print(Qija[0].varValue, Qijb[0].varValue, Qijc[0].varValue )
-        # print(Qija[0].varValue + Qijb[0].varValue + Qijc[0].varValue)
-        # print ('..........')
-
-        # Each substation power flow
-        # print(' Substation #1:', Pija[4].varValue, Pijb[4].varValue, Pijc[4].varValue )
-        # print(' Substation #2:', Pija[27].varValue, Pijb[27].varValue, Pijc[27].varValue )
-        # print(' Substation #3:', Pija[34].varValue, Pijb[34].varValue, Pijc[34].varValue )
-        # print ('..........')
-        # print(' Tie Switch Status:')        
-        # for k in range(len(No)):
-        #     print(xij[No[k]].varValue)
         
         taps = []
         for i in range(tap_r1):
-            if tapi1[i].varValue == 1:
-                print(i,tapi1[i].varValue)
+            if tapi1[i].varValue >= 0.9:
+                # print(i,tapi1[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
 
-            if tapi2[i].varValue == 1:
-                print(i,tapi2[i].varValue)
+            if tapi2[i].varValue >= 0.9:
+                # print(i,tapi2[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
 
                 
-            if tapi3[i].varValue == 1:
-                print(i,tapi3[i].varValue)
+            if tapi3[i].varValue >= 0.9:
+                # print(i,tapi3[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
 
                
-            if tapi4[i].varValue == 1:
-                print(i,tapi4[i].varValue)
+            if tapi4[i].varValue >= 0.9:
+                # print(i,tapi4[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
                
-            if tapi5[i].varValue == 1:
-                print(i,tapi5[i].varValue)
+            if tapi5[i].varValue >= 0.9:
+                # print(i,tapi5[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
                
-            if tapi6[i].varValue == 1:
-                print(i,tapi6[i].varValue)
+            if tapi6[i].varValue >= 0.9:
+                # print(i,tapi6[i].varValue)
                 taps.append(i-17)
                 taps.append(i-17)
                 taps.append(i-17)
                
         status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
               swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
-        # status_c = [0,0,0,1,0,0, 0,0,1,0,0,0]
+
         status_r = taps
         return status_c, status_r        

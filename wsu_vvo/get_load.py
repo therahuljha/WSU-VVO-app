@@ -6,15 +6,18 @@ Created on Fri no 22 11:17:12 2019
 import json
 import numpy as np
 import math
+import networkx as nx 
 
 class PowerData(object):
     """
     WSU VVO, Get load data from feeder
     """
-    def __init__(self, msr_mrids_load, sim_output,xmfr):
+    def __init__(self, msr_mrids_load, sim_output,xmfr,LineData,open_switch):
         self.meas_load = msr_mrids_load
         self.output = sim_output
         self.xmfr = xmfr
+        self.LineData = LineData
+        self.open_switch = open_switch
         
     def demand(self):
         data1 = self.meas_load
@@ -90,6 +93,40 @@ class PowerData(object):
                 kVaR_C = cap_kvar_value [i])
             Demand.append(cap1)
 
+        G = nx.Graph()
+        
+        # Note: If required, this nor_open list can be obtained from Platform
+        nor_open = ['ln0653457_sw','v7173_48332_sw', 'tsw803273_sw', 'a333_48332_sw','tsw320328_sw',\
+                'a8645_48332_sw','tsw568613_sw', 'wf856_48332_sw', 'wg127_48332_sw']  
+        for l in self.LineData:
+            if l['line'] not in nor_open:
+                G.add_edge(l['from_br'], l['to_br'])
+        T = list(nx.bfs_tree(G, source = 'SOURCEBUS').edges())
+        Nodes = list(nx.bfs_tree(G, source = 'SOURCEBUS').nodes())
+        
+        G1 = nx.Graph()
+        
+        # Note: If required, this nor_open list can be obtained from Platform
+         
+        for l in self.LineData:
+            if l['index'] not in self.open_switch:
+                G1.add_edge(l['from_br'], l['to_br'])
+        T1 = list(nx.bfs_tree(G1, source = 'SOURCEBUS').edges())
+        Nodes1 = list(nx.bfs_tree(G1, source = 'SOURCEBUS').nodes())
+
+        diff_node = list(set(Nodes) - set(Nodes1))
+        # print(diff_node[0])
+        for l in Demand:
+            if l['bus'] in diff_node:
+                l['kW'] = 0
+                l['kVaR'] = 0
+                l['kVaR_C'] = 0
+        
+
         return Demand
+
+
+
+    
 
         # Transferring the load to Primary side for solving the restoration. No triplex line in optimization model
