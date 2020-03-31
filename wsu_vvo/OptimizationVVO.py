@@ -12,7 +12,6 @@ class WSUVVO(object):
     """
     This code is for solving the VVO for  test cases. The planning model is used as
     input and real time load data is required.
-
     """
     def __init__(self):
         """
@@ -23,7 +22,7 @@ class WSUVVO(object):
         """
         pass        
    
-    def VVO9500 (self, Linepar, LoadData,open_switch):    
+    def VVO9500 (self, Linepar, LoadData,open_switch,xmfr):    
         
         # Find Tree and Planning model using Linepar
         G = nx.Graph()
@@ -31,6 +30,7 @@ class WSUVVO(object):
         # Note: If required, this nor_open list can be obtained from Platform
         nor_open = ['ln0653457_sw','v7173_48332_sw', 'tsw803273_sw', 'a333_48332_sw','tsw320328_sw',\
                    'a8645_48332_sw','tsw568613_sw', 'wf856_48332_sw', 'wg127_48332_sw']  
+
         for l in Linepar:
             if l['line'] not in nor_open:
                 G.add_edge(l['from_br'], l['to_br'])
@@ -50,8 +50,8 @@ class WSUVVO(object):
         fr = list(fr)
         to = list(to) 
         bigM = 15000   
-        CVRP = 0.6
-        CVRQ = 3
+        CVRP = 1.0
+        CVRQ = 1.0
         tap_r1 = 33
         loadmult = 1
             
@@ -65,26 +65,42 @@ class WSUVVO(object):
         Qija = LpVariable.dicts("xQa", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijb = LpVariable.dicts("xQb", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijc = LpVariable.dicts("xQc", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
-        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
-        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
-        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.2025, cat='Continous')
+        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
+        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
+        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
         tapi1 = LpVariable.dicts("xtap1", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi2 = LpVariable.dicts("xtap2", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi3 = LpVariable.dicts("xtap3", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi4 = LpVariable.dicts("xtap4", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi5 = LpVariable.dicts("xtap5", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi6 = LpVariable.dicts("xtap6", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi7 = LpVariable.dicts("xtap7", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi8 = LpVariable.dicts("xtap8", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi9 = LpVariable.dicts("xtap9", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi10 = LpVariable.dicts("xtap10", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi11 = LpVariable.dicts("xtap11", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi12 = LpVariable.dicts("xtap12", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi13 = LpVariable.dicts("xtap13", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi14 = LpVariable.dicts("xtap14", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi15 = LpVariable.dicts("xtap15", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi16 = LpVariable.dicts("xtap16", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi17 = LpVariable.dicts("xtap17", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
+        tapi18 = LpVariable.dicts("xtap18", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         swia = LpVariable.dicts("xswa", ((i) for i in range(nNodes) ), lowBound=0, upBound=1, cat='Binary')
         swib = LpVariable.dicts("xswb", ((i) for i in range(nNodes) ), lowBound=0, upBound=1, cat='Binary')
         swic = LpVariable.dicts("xswc", ((i) for i in range(nNodes) ), lowBound=0, upBound=1, cat='Binary')
+        QPVa = LpVariable.dicts("xQPVa", ((i) for i in range(nNodes) ), lowBound=-1, upBound=1, cat='Continous')
+        QPVb = LpVariable.dicts("xQPVb", ((i) for i in range(nNodes) ), lowBound=-1, upBound=1, cat='Continous')
+        QPVc = LpVariable.dicts("xQPVc", ((i) for i in range(nNodes) ), lowBound=-1, upBound=1, cat='Continous')
 
+   
         # Optimization problem objective definitions
-        # Minimize the power flow from feeder 
-       
-        
-        
+        # Minimize the power flow from feeder        
+             
         prob = LpProblem("CVRSW",LpMinimize)
-        prob += Pija[0]+Pijb[0]+Pijc[0] 
+        # prob += Pija[0]+Pijb[0]+Pijc[0] 
+        sub = [4, 27, 34]
+        prob += Pija[4]+Pijb[4]+Pijc[4] + Pija[27]+Pijb[27]+Pijc[27] + Pija[34]+Pijb[34]+Pijc[34]
 
         # Constraints (v_i==1)
         for k in range(nNodes):
@@ -94,7 +110,6 @@ class WSUVVO(object):
         for k in range(nNodes):
             prob += si[k] == 1
         
-
 
         # Real power flow equation for Phase A, B, and C
         #Phase A   
@@ -108,15 +123,21 @@ class WSUVVO(object):
             demandP = 0.
             demandQ = 0.
             demandQc = 0.
+            demandPpv = 0.
+            demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'A':
                     demandP += d['kW']
                     demandQ += d['kVaR']
                     demandQc += d['kVaR_C']
+                    demandPpv += d['kW_pv']
+                    demandSpv += d['kVA_pv']
             prob += lpSum(Pija[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Via[indb] == \
-                    lpSum(Pija[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2)
+                    lpSum(Pija[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
+            # prob += lpSum(Qija[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Via[indb] == \
+            #         lpSum(Qija[ch[j]] for j in M) + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swia[indb]  
             prob += lpSum(Qija[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Via[indb] == \
-                    lpSum(Qija[ch[j]] for j in M) + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swia[indb]
+                    lpSum(Qija[ch[j]] for j in M) + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swia[indb]  + (np.sqrt(demandSpv**2 - demandPpv**2))*QPVa[indb]
 
         # Phase B
         for i in range(nEdges):    
@@ -129,15 +150,21 @@ class WSUVVO(object):
             demandP = 0.
             demandQ = 0.
             demandQc = 0.
+            demandPpv = 0.
+            demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'B':
                     demandP += d['kW']
                     demandQ += d['kVaR']
                     demandQc += d['kVaR_C']
+                    demandPpv += d['kW_pv']
+                    demandSpv += d['kVA_pv']
             prob += lpSum(Pijb[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Vib[indb] == \
-                    lpSum(Pijb[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2)
+                    lpSum(Pijb[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
+            # prob += lpSum(Qijb[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vib[indb] == \
+            #         lpSum(Qijb[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swib[indb] 
             prob += lpSum(Qijb[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vib[indb] == \
-                    lpSum(Qijb[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swib[indb]
+                    lpSum(Qijb[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swib[indb] + (np.sqrt(demandSpv**2 - demandPpv**2))*QPVb[indb]
 
         # Phase C
         for i in range(nEdges):    
@@ -150,15 +177,21 @@ class WSUVVO(object):
             demandP = 0.
             demandQ = 0.
             demandQc = 0.
+            demandPpv = 0.
+            demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'C':
                     demandP += d['kW']
                     demandQ += d['kVaR']
                     demandQc += d['kVaR_C']
+                    demandPpv += d['kW_pv']
+                    demandSpv += d['kVA_pv']
             prob += lpSum(Pijc[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Vic[indb] == \
-                    lpSum(Pijc[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2)
+                    lpSum(Pijc[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
+            # prob += lpSum(Qijc[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vic[indb] == \
+            #         lpSum(Qijc[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swic[indb] 
             prob += lpSum(Qijc[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vic[indb] == \
-                    lpSum(Qijc[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swic[indb]
+                    lpSum(Qijc[ch[j]] for j in M)  + loadmult*(demandQ)*(1-CVRQ/2) - demandQc*swic[indb] + (np.sqrt(demandSpv**2 - demandPpv**2))*QPVc[indb]
 
         # Big-M method for real power flow and switch variable
         for k in range(nEdges):    
@@ -181,7 +214,9 @@ class WSUVVO(object):
         M = 4
         unit = 1.
 
+        ## regulator index
         indr  = [8, 33, 41, 1550, 2043, 1014]
+
         # Phase A
         for m, l in enumerate(Linepar):
             k = l['index']
@@ -299,8 +334,6 @@ class WSUVVO(object):
         prob += Vic[0] == 1.1025
 
 
-
-
         # No reverse real power flow in substation
         sub = [4, 27, 34]
         for s in sub:
@@ -315,6 +348,8 @@ class WSUVVO(object):
         
         
         ## 3 regulator at substation and 3 are along the feeder
+
+        ## tap1+tap2+....tap33 ==1 only one tap position will be 1 , other 0
         
     
         prob += lpSum([tapi1[i] for i in range(tap_r1)]) == 1  
@@ -323,105 +358,232 @@ class WSUVVO(object):
         prob += lpSum([tapi4[i] for i in range(tap_r1)]) == 1  
         prob += lpSum([tapi5[i] for i in range(tap_r1)]) == 1  
         prob += lpSum([tapi6[i] for i in range(tap_r1)]) == 1  
+        
+        prob += lpSum([tapi7[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi8[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi9[i] for i in range(tap_r1)]) == 1 
+        prob += lpSum([tapi10[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi11[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi12[i] for i in range(tap_r1)]) == 1 
+        
+        prob += lpSum([tapi13[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi14[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi15[i] for i in range(tap_r1)]) == 1 
+        prob += lpSum([tapi16[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi17[i] for i in range(tap_r1)]) == 1  
+        prob += lpSum([tapi18[i] for i in range(tap_r1)]) == 1 
 
         
-
+        ## v2 - tap^2*v1 ==0
       
         M = 10
         tapk = np.arange(0.9, 1.1, 0.00625)
         for k in range(0,33):
            prob += Via[9] - tapk[k]**2*Via[7] - M*(1-tapi1[k]) <= 0
            prob += Via[9] - tapk[k]**2*Via[7] + M*(1-tapi1[k]) >= 0
-           prob += Vib[9] - tapk[k]**2*Vib[7] - M*(1-tapi1[k]) <= 0
-           prob += Vib[9] - tapk[k]**2*Vib[7] + M*(1-tapi1[k]) >= 0
-           prob += Vic[9] - tapk[k]**2*Vic[7] - M*(1-tapi1[k]) <= 0
-           prob += Vic[9] - tapk[k]**2*Vic[7] + M*(1-tapi1[k]) >= 0
+           prob += Vib[9] - tapk[k]**2*Vib[7] - M*(1-tapi2[k]) <= 0
+           prob += Vib[9] - tapk[k]**2*Vib[7] + M*(1-tapi2[k]) >= 0
+           prob += Vic[9] - tapk[k]**2*Vic[7] - M*(1-tapi3[k]) <= 0
+           prob += Vic[9] - tapk[k]**2*Vic[7] + M*(1-tapi3[k]) >= 0
            
-           prob += Via[34] - tapk[k]**2*Via[31] - M*(1-tapi2[k]) <= 0    
-           prob += Via[34] - tapk[k]**2*Via[31] + M*(1-tapi2[k]) >= 0
-           prob += Vib[34] - tapk[k]**2*Vib[31] - M*(1-tapi2[k]) <= 0
-           prob += Vib[34] - tapk[k]**2*Vib[31] + M*(1-tapi2[k]) >= 0
-           prob += Vic[34] - tapk[k]**2*Vic[31] - M*(1-tapi2[k]) <= 0
-           prob += Vic[34] - tapk[k]**2*Vic[31] + M*(1-tapi2[k]) >= 0
+           prob += Via[34] - tapk[k]**2*Via[31] - M*(1-tapi4[k]) <= 0    
+           prob += Via[34] - tapk[k]**2*Via[31] + M*(1-tapi4[k]) >= 0
+           prob += Vib[34] - tapk[k]**2*Vib[31] - M*(1-tapi5[k]) <= 0
+           prob += Vib[34] - tapk[k]**2*Vib[31] + M*(1-tapi5[k]) >= 0
+           prob += Vic[34] - tapk[k]**2*Vic[31] - M*(1-tapi6[k]) <= 0
+           prob += Vic[34] - tapk[k]**2*Vic[31] + M*(1-tapi6[k]) >= 0
            
-           prob += Via[42] - tapk[k]**2*Via[38] - M*(1-tapi3[k]) <= 0
-           prob += Via[42] - tapk[k]**2*Via[38] + M*(1-tapi3[k]) >= 0
-           prob += Vib[42] - tapk[k]**2*Vib[38] - M*(1-tapi3[k]) <= 0
-           prob += Vib[42] - tapk[k]**2*Vib[38] + M*(1-tapi3[k]) >= 0
-           prob += Vic[42] - tapk[k]**2*Vic[38] - M*(1-tapi3[k]) <= 0
-           prob += Vic[42] - tapk[k]**2*Vic[38] + M*(1-tapi3[k]) >= 0
+           prob += Via[42] - tapk[k]**2*Via[38] - M*(1-tapi7[k]) <= 0
+           prob += Via[42] - tapk[k]**2*Via[38] + M*(1-tapi7[k]) >= 0
+           prob += Vib[42] - tapk[k]**2*Vib[38] - M*(1-tapi8[k]) <= 0
+           prob += Vib[42] - tapk[k]**2*Vib[38] + M*(1-tapi8[k]) >= 0
+           prob += Vic[42] - tapk[k]**2*Vic[38] - M*(1-tapi9[k]) <= 0
+           prob += Vic[42] - tapk[k]**2*Vic[38] + M*(1-tapi9[k]) >= 0
            
-           prob += Via[1551] - tapk[k]**2*Via[1525] - M*(1-tapi4[k]) <= 0
-           prob += Via[1551] - tapk[k]**2*Via[1525] + M*(1-tapi4[k]) >= 0
-           prob += Vib[1551] - tapk[k]**2*Vib[1525] - M*(1-tapi4[k]) <= 0
-           prob += Vib[1551] - tapk[k]**2*Vib[1525] + M*(1-tapi4[k]) >= 0
-           prob += Vic[1551] - tapk[k]**2*Vic[1525] - M*(1-tapi4[k]) <= 0
-           prob += Vic[1551] - tapk[k]**2*Vic[1525] + M*(1-tapi4[k]) >= 0    
+           prob += Via[1551] - tapk[k]**2*Via[1525] - M*(1-tapi10[k]) <= 0
+           prob += Via[1551] - tapk[k]**2*Via[1525] + M*(1-tapi10[k]) >= 0
+           prob += Vib[1551] - tapk[k]**2*Vib[1525] - M*(1-tapi11[k]) <= 0
+           prob += Vib[1551] - tapk[k]**2*Vib[1525] + M*(1-tapi11[k]) >= 0
+           prob += Vic[1551] - tapk[k]**2*Vic[1525] - M*(1-tapi12[k]) <= 0
+           prob += Vic[1551] - tapk[k]**2*Vic[1525] + M*(1-tapi12[k]) >= 0    
            
-           prob += Via[2044] - tapk[k]**2*Via[2023] - M*(1-tapi5[k]) <= 0
-           prob += Via[2044] - tapk[k]**2*Via[2023] + M*(1-tapi5[k]) >= 0
-           prob += Vib[2044] - tapk[k]**2*Vib[2023] - M*(1-tapi5[k]) <= 0
-           prob += Vib[2044] - tapk[k]**2*Vib[2023] + M*(1-tapi5[k]) >= 0
-           prob += Vic[2044] - tapk[k]**2*Vic[2023] - M*(1-tapi5[k]) <= 0
-           prob += Vic[2044] - tapk[k]**2*Vic[2023] + M*(1-tapi5[k]) >= 0
+           prob += Via[2044] - tapk[k]**2*Via[2023] - M*(1-tapi13[k]) <= 0
+           prob += Via[2044] - tapk[k]**2*Via[2023] + M*(1-tapi13[k]) >= 0
+           prob += Vib[2044] - tapk[k]**2*Vib[2023] - M*(1-tapi14[k]) <= 0
+           prob += Vib[2044] - tapk[k]**2*Vib[2023] + M*(1-tapi14[k]) >= 0
+           prob += Vic[2044] - tapk[k]**2*Vic[2023] - M*(1-tapi15[k]) <= 0
+           prob += Vic[2044] - tapk[k]**2*Vic[2023] + M*(1-tapi15[k]) >= 0
            
-           prob += Via[1015] - tapk[k]**2*Via[998] - M*(1-tapi6[k]) <= 0
-           prob += Via[1015] - tapk[k]**2*Via[998] + M*(1-tapi6[k]) >= 0
-           prob += Vib[1015] - tapk[k]**2*Vib[998] - M*(1-tapi6[k]) <= 0
-           prob += Vib[1015] - tapk[k]**2*Vib[998] + M*(1-tapi6[k]) >= 0
-           prob += Vic[1015] - tapk[k]**2*Vic[998] - M*(1-tapi6[k]) <= 0
-           prob += Vic[1015] - tapk[k]**2*Vic[998] + M*(1-tapi6[k]) >= 0
+           prob += Via[1015] - tapk[k]**2*Via[998] - M*(1-tapi16[k]) <= 0
+           prob += Via[1015] - tapk[k]**2*Via[998] + M*(1-tapi16[k]) >= 0
+           prob += Vib[1015] - tapk[k]**2*Vib[998] - M*(1-tapi17[k]) <= 0
+           prob += Vib[1015] - tapk[k]**2*Vib[998] + M*(1-tapi17[k]) >= 0
+           prob += Vic[1015] - tapk[k]**2*Vic[998] - M*(1-tapi18[k]) <= 0
+           prob += Vic[1015] - tapk[k]**2*Vic[998] + M*(1-tapi18[k]) >= 0
         
 
         print ('Solving the VVO problem..........')
         # Call solver 
         # prob.solve()
-        prob.solve(CPLEX(msg=1))
-        prob.writeLP("Check.lp")
-        print ("Status:", LpStatus[prob.status])
+        # try:
+        # prob.solve(CPLEX(msg=1))
+        try:
+            # prob.solve(CPLEX_CMD(msg=1,options=['set mip tolerances mipgap 0.05']))
+            # prob.writeLP("Check.lp")
+            # print ("Status:", LpStatus[prob.status])
+            prob.solve(CPLEX(msg=1))
+            prob.writeLP("Check.lp")
+            print("using Cplex solver")
+            print ("Status:", LpStatus[prob.status])
+                        
+        except:
+            try:
+                prob.solve()
+                prob.writeLP("Check.lp")
+                print("using Pulp solver")
+                print ("Status:", LpStatus[prob.status])
+            except:
+                print("Solution not found")
         
-        taps = []
-        for i in range(tap_r1):
-            if tapi1[i].varValue >= 0.9:
-                # print(i,tapi1[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
+        try:
+            status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+                swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
 
-            if tapi2[i].varValue >= 0.9:
-                # print(i,tapi2[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
+            
+            # print(status_c)
+            print('\n .........................')
+            
+            # taps = []
+            for i in range(tap_r1):
+                if tapi1[i].varValue >= 0.9:
+                    # print(i,tapi1[i].varValue)
+                    tap1 = (i-17)
+                    # taps.append(i-17)
+                    # taps.append(i-17)
 
+                if tapi2[i].varValue >= 0.9:
+                    tap2 = (i-17)
+                    
+                    
+                if tapi3[i].varValue >= 0.9:
+                    tap3 = (i-17)
+                                
+                if tapi4[i].varValue >= 0.9:
+                    tap4 = (i-17)
                 
-            if tapi3[i].varValue >= 0.9:
-                # print(i,tapi3[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
+                if tapi5[i].varValue >= 0.9:
+                    tap5 = (i-17)
+                
+                if tapi6[i].varValue >= 0.9:
+                    tap6 = (i-17)
 
-               
-            if tapi4[i].varValue >= 0.9:
-                # print(i,tapi4[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
-               
-            if tapi5[i].varValue >= 0.9:
-                # print(i,tapi5[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
-               
-            if tapi6[i].varValue >= 0.9:
-                # print(i,tapi6[i].varValue)
-                taps.append(i-17)
-                taps.append(i-17)
-                taps.append(i-17)
-               
-        status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
-              swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
+                if tapi7[i].varValue >= 0.9:
+                    tap7 = (i-17)
+            
+                if tapi8[i].varValue >= 0.9:
+                    tap8 = (i-17)
 
-        status_r = taps
-        return status_c, status_r        
+                if tapi9[i].varValue >= 0.9:
+                    tap9 = (i-17)
+                # print(tapi10)
+                if tapi10[i].varValue >= 0.9:
+                    tap10 = (i-17)
+
+                if tapi11[i].varValue >= 0.9:
+                    tap11 = (i-17)
+
+                if tapi12[i].varValue >= 0.9:
+                    tap12 = (i-17)
+
+                if tapi13[i].varValue >= 0.9:
+                    tap13 = (i-17)
+
+                if tapi14[i].varValue >= 0.9:
+                    tap14 = (i-17)
+
+                if tapi15[i].varValue >= 0.9:
+                    tap15 = (i-17)
+
+                if tapi16[i].varValue >= 0.9:
+                    tap16 = (i-17)
+
+                if tapi17[i].varValue >= 0.9:
+                    tap17 = (i-17)
+
+                if tapi18[i].varValue >= 0.9:
+                    tap18 = (i-17)
+
+                # if tapi10[i].varValue >= 0.9:
+                # tap10 = -1
+                    
+            # for i in range(tap_r1):
+            #     print(tapi10[i].varValue)
+
+            Qpvcontrol = []
+            for i in range(nNodes):
+                demandPpv = 0.
+                demandSpv = 0.            
+                for l in LoadData:
+                    if l['bus'] == Nodes[i]:
+                        demandPpv += d['kW_pv']
+                        demandSpv += d['kVA_pv']
+                        break
+
+                if QPVa[i].varValue != None:
+                    # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
+                    value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue)
+                    # store = [value, l['bus']]
+                    message = dict(bus = l['bus'],
+                                    mrid = 'abc',
+                                    val = value)
+                    # print(store)
+                    Qpvcontrol.append(message)
+
+                if QPVb[i].varValue != None:
+                    # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue))
+                    value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue)
+                    message = dict(bus = l['bus'],
+                                    mrid = 'abc',
+                                    val = value)
+                    Qpvcontrol.append(message)
+
+                if QPVc[i].varValue != None:
+                    # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
+                    value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVc[i].varValue)
+                    message = dict(bus = l['bus'],
+                                    mrid = 'abc',
+                                    val = value)
+                    Qpvcontrol.append(message)
+
+            for ld in Qpvcontrol:
+                node = ld['bus']
+                # print(node)
+                # Find this node in Xfrm primary
+                for tr in xmfr:
+                    pri = tr['bus1']
+                    # print(pri)
+                    seci = tr['bus2']
+                    # print(pseci)
+                    if pri == node.lower():
+                        ld['bus'] = 's'+tr['bus2']                    # Transfer this Qcontrol to secondary and change the node name
+                        
+                
+            # status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+            #       swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
+
+            # status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+            #       swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
+
+            status_r = [tap1, tap2, tap3, tap4, tap5, tap6, tap7, tap8, tap9, tap10, tap11, tap12, tap13, tap14, tap15, tap16, tap17, tap18]
+            # status_r = [tap15, tap12, tap13,tap2, tap1, tap11, tap4, tap8, tap5, tap14, tap18, tap17, tap3, tap10, tap9, tap7, tap16, tap6]
+
+            # print(status_r)
+
+            flag = 1
+            return status_c, status_r, Qpvcontrol, flag
+        except:
+            status_c = []
+            status_r = []
+            flag = 0
+            Qpvcontrol = []
+            return status_c, status_r, Qpvcontrol, flag

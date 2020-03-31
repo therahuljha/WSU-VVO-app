@@ -66,6 +66,27 @@ class MODEL_EQ(object):
         "objectType": "LoadBreakSwitch"}     
         obj_msr_loadsw = self.gapps.get_response(self.topic, message, timeout=180)   
 
+        # Get measurement MRIDS for DERs. The measid for DERs are not returning any results so using AC line segment
+        message = {
+        "modelId": self.model_mrid,
+        "requestType": "QUERY_OBJECT_MEASUREMENTS",
+        "resultFormat": "JSON",
+        "objectType": "ACLineSegment"}     
+        obj_msr_sync = self.gapps.get_response(self.topic, message, timeout=180)   
+        obj_msr_sync = obj_msr_sync['data']
+      
+        # Get measurement MRIDS for Inverters
+        message = {
+        "modelId": self.model_mrid,
+        "requestType": "QUERY_OBJECT_MEASUREMENTS",
+        "resultFormat": "JSON",
+        "objectType": "PowerElectronicsConnection"}     
+        obj_msr_inv = self.gapps.get_response(self.topic, message, timeout=180)   
+        # print(obj_msr_inv)
+
+        # data3 = obj_msr_inv['data']
+        # print(data3[1])
+        
         # Get measurement MRIDS for kW consumptions at each node
         message = {
             "modelId": self.model_mrid,
@@ -92,8 +113,18 @@ class MODEL_EQ(object):
             "resultFormat": "JSON",
             "objectType": "LinearShuntCompensator"}     
         obj_msr_cap = self.gapps.get_response(self.topic, message, timeout=180)
+        # print('Gathering Measurement MRIDS.... \n')
+        # return obj_msr_loadsw, obj_msr_demand, obj_msr_reg, obj_msr_cap ,obj_msr_inv
+
+        message = {
+            "modelId": self.model_mrid,
+            "requestType": "QUERY_OBJECT_MEASUREMENTS",
+            "resultFormat": "JSON",
+            "objectType": "ACLineSegment"}     
+        obj_msr_node = self.gapps.get_response(self.topic, message, timeout=180)
+        # print(obj_msr_node)
         print('Gathering Measurement MRIDS.... \n')
-        return obj_msr_loadsw, obj_msr_demand, obj_msr_reg, obj_msr_cap
+        return obj_msr_loadsw, obj_msr_demand, obj_msr_reg, obj_msr_cap ,obj_msr_inv,obj_msr_node
 
     def distLoad(self):
         query = """
@@ -267,50 +298,136 @@ class MODEL_EQ(object):
         """ % self.model_mrid
         results = self.gapps.query_data(query, timeout=60)
         results_obj = results['data']
-        Inv = []
+        Inverter_PnS = []
         inverter = results_obj['results']['bindings']
         for i in inverter:
             name = i['inverter_name']['value']
             message = dict(name = i['inverter_name']['value'],
                         mrid  = i['inverter_mrid']['value'],
-                        measid = [],
                         ratedS = 0.001 * float(i['inverter_rated_s']['value']),
                         ratedP = 0.001 * float(i['inverter_p']['value']))
-            Inv.append(message)   
+            Inverter_PnS.append(message)   
         
 
+    #     query = """
+    # PREFIX r: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    # PREFIX c: <http://iec.ch/TC57/CIM100#>
+    # PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    # SELECT ?inverter_mrid ?meas_mrid ?phase
+    # WHERE {
+    # # Update for your feeder, or remove for all feeders.
+    # VALUES ?feeder_mrid {"%s"}
+    # ?s r:type ?type.
+    # ?s c:IdentifiedObject.mRID ?meas_mrid.
+    # ?s c:Measurement.PowerSystemResource ?eq.
+    # ?s c:Measurement.Terminal ?trm.
+    # ?s c:Measurement.phases ?phsraw.
+    # {bind(strafter(str(?phsraw),"PhaseCode.") as ?phase)} .
+    # ?eq c:IdentifiedObject.mRID ?inverter_mrid.
+    # ?eq r:type c:PowerElectronicsConnection.
+    # ?eq c:Equipment.EquipmentContainer ?fdr.
+    # ?fdr c:IdentifiedObject.mRID ?feeder_mrid.
+    # }
+    # ORDER BY ?inverter_mrid
+    #     """ % self.model_mrid
+    #     results = self.gapps.query_data(query, timeout=60)
+    #     results_obj = results['data']
+    #     inv_meas = results_obj['results']['bindings']        
+    #     for im in inv_meas:
+    #         mrid  = im['inverter_mrid']['value']
+    #         for i in Inverter_PnS:
+    #             if i['mrid'] == mrid:
+    #                 i['measid'] = im['meas_mrid']['value']
+
+        # print(Inverter_PnS)
+        return Inverter_PnS
+        print('Inverter..')
+
+    def distributed_generators(self):
         query = """
-    PREFIX r: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX c: <http://iec.ch/TC57/CIM100#>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-    SELECT ?inverter_mrid ?meas_mrid ?phase
-    WHERE {
-    # Update for your feeder, or remove for all feeders.
-    VALUES ?feeder_mrid {"%s"}
-    ?s r:type ?type.
-    ?s c:IdentifiedObject.mRID ?meas_mrid.
-    ?s c:Measurement.PowerSystemResource ?eq.
-    ?s c:Measurement.Terminal ?trm.
-    ?s c:Measurement.phases ?phsraw.
-    {bind(strafter(str(?phsraw),"PhaseCode.") as ?phase)} .
-    ?eq c:IdentifiedObject.mRID ?inverter_mrid.
-    ?eq r:type c:PowerElectronicsConnection.
-    ?eq c:Equipment.EquipmentContainer ?fdr.
-    ?fdr c:IdentifiedObject.mRID ?feeder_mrid.
+        # SynchronousMachine - DistSyncMachine
+    PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX c:  <http://iec.ch/TC57/CIM100#>
+    SELECT ?name ?bus ?ratedS ?ratedU ?p ?q ?id ?fdrid WHERE {
+    VALUES ?fdrid {"%s"}  # 123 bus
+    ?s r:type c:SynchronousMachine.
+    ?s c:IdentifiedObject.name ?name.
+    ?s c:Equipment.EquipmentContainer ?fdr.
+    ?fdr c:IdentifiedObject.mRID ?fdrid.
+    ?s c:SynchronousMachine.ratedS ?ratedS.
+    ?s c:SynchronousMachine.ratedU ?ratedU.
+    ?s c:SynchronousMachine.p ?p.
+    ?s c:SynchronousMachine.q ?q. 
+    ?s c:IdentifiedObject.mRID ?id.
+    OPTIONAL {?smp c:SynchronousMachinePhase.SynchronousMachine ?s.
+    ?smp c:SynchronousMachinePhase.phase ?phsraw.
+    bind(strafter(str(?phsraw),"SinglePhaseKind.") as ?phs) }
+    ?t c:Terminal.ConductingEquipment ?s.
+    ?t c:Terminal.ConnectivityNode ?cn. 
+    ?cn c:IdentifiedObject.name ?bus
     }
-    ORDER BY ?inverter_mrid
+    GROUP by ?name ?bus ?ratedS ?ratedU ?p ?q ?id ?fdrid
+    ORDER by ?name
         """ % self.model_mrid
         results = self.gapps.query_data(query, timeout=60)
         results_obj = results['data']
-        inv_meas = results_obj['results']['bindings']        
-        for im in inv_meas:
-            mrid  = im['inverter_mrid']['value']
-            for i in Inv:
-                if i['mrid'] == mrid:
-                    i['measid'] = im['meas_mrid']['value']
+        DERs = []
+        MT = results_obj['results']['bindings']
+        for d in MT:
+            message = dict(name = d['name']['value'],
+                           mrid  = d['id']['value'],
+                           bus = d['bus']['value'],
+                           ratedS = 0.001 * float(d['ratedS']['value']))
+            DERs.append(message)  
 
-        # print(Inv)
-        print('Inverter..')
+    
+        query = """
+       PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX c:  <http://iec.ch/TC57/CIM100#>
+    SELECT ?name ?bus ?ratedS ?ratedU ?ipu ?ratedE ?storedE ?state ?p ?q ?id ?fdrid WHERE {
+    ?s r:type c:BatteryUnit.
+    ?s c:IdentifiedObject.name ?name.
+    ?pec c:PowerElectronicsConnection.PowerElectronicsUnit ?s.
+    # feeder selection options - if all commented out, query matches all feeders
+    #VALUES ?fdrid {"_C1C3E687-6FFD-C753-582B-632A27E28507"}  # 123 bus
+    #VALUES ?fdrid {"_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"}  # 13 bus
+    #VALUES ?fdrid {"_5B816B93-7A5F-B64C-8460-47C17D6E4B0F"}  # 13 bus assets
+    #VALUES ?fdrid {"_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3"}  # 8500 node
+    #VALUES ?fdrid {"_67AB291F-DCCD-31B7-B499-338206B9828F"}  # J1
+    VALUES ?fdrid {"%s"}  # R2 12.47 3
+    ?pec c:Equipment.EquipmentContainer ?fdr.
+    ?fdr c:IdentifiedObject.mRID ?fdrid.
+    ?pec c:PowerElectronicsConnection.ratedS ?ratedS.
+    ?pec c:PowerElectronicsConnection.ratedU ?ratedU.
+    ?pec c:PowerElectronicsConnection.maxIFault ?ipu.
+    ?s c:BatteryUnit.ratedE ?ratedE.
+    ?s c:BatteryUnit.storedE ?storedE.
+    ?s c:BatteryUnit.batteryState ?stateraw.
+    bind(strafter(str(?stateraw),"BatteryState.") as ?state)
+    ?pec c:PowerElectronicsConnection.p ?p.
+    ?pec c:PowerElectronicsConnection.q ?q. 
+    OPTIONAL {?pecp c:PowerElectronicsConnectionPhase.PowerElectronicsConnection ?pec.
+    ?pecp c:PowerElectronicsConnectionPhase.phase ?phsraw.
+    bind(strafter(str(?phsraw),"SinglePhaseKind.") as ?phs) }
+    ?s c:IdentifiedObject.mRID ?id.
+    ?t c:Terminal.ConductingEquipment ?pec.
+    ?t c:Terminal.ConnectivityNode ?cn. 
+    ?cn c:IdentifiedObject.name ?bus
+    }
+    GROUP by ?name ?bus ?ratedS ?ratedU ?ipu ?ratedE ?storedE ?state ?p ?q ?id ?fdrid
+    ORDER by ?name
+        """ % self.model_mrid
+        results = self.gapps.query_data(query, timeout=60)
+        results_obj = results['data']
+        ESS = results_obj['results']['bindings']
+        for d in ESS:
+            message = dict(name = d['name']['value'],
+                           mrid  = d['id']['value'],
+                           bus = d['bus']['value'],
+                           ratedS = 0.001 * float(d['ratedS']['value']))
+            DERs.append(message)  
+
+        return DERs
 
     def get_regulators_mrids(self):
         query = """
@@ -376,9 +493,17 @@ class MODEL_EQ(object):
         """ % self.model_mrid
         results = self.gapps.query_data(query, timeout=60)
         regulators = []
+        name = []
+        bus_n = []
         results_obj = results['data']
         for p in results_obj['results']['bindings']:
             regulators.append(p['rid']['value'])
+            name.append(p['rname']['value'])
+            bus_n.append(p['bus']['value'])
+            # print(p)
+        # for k in range(len(regulators)):
+        #     print(name[k], bus_n[k], regulators[k])
+        print("\n ...........................................")
         return regulators
         with open('regulators.json', 'w') as outfile:
             json.dump(regulators, outfile)
@@ -439,8 +564,17 @@ class MODEL_EQ(object):
         results = self.gapps.query_data(query, timeout=60)
         capacitors = []
         results_obj = results['data']
+        name = []
+        bus_n = []
         for p in results_obj['results']['bindings']:
+            # print(p)
             capacitors.append(p['id']['value'])
+            name.append(p['name']['value'])
+            bus_n.append(p['bus']['value'])
+            
+        # for k in range(len(capacitors)):
+        #     print(name[k], bus_n[k], capacitors[k])
+        print("\n ...........................................")
         return capacitors
         with open('capacitors.json', 'w') as outfile:
             json.dump(capacitors, outfile)

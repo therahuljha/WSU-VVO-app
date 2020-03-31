@@ -79,7 +79,7 @@ class SwitchingActions(object):
     message to the simulation_input_topic with the forward and reverse difference specified.
     """
 
-    def __init__(self, simulation_id, gridappsd_obj, reg_list, cap_list,  demand, line, xfmr,msr_mrids_demand,msr_mrids_cap,msr_mrids_reg,obj_msr_loadsw,switches):
+    def __init__(self, simulation_id, gridappsd_obj, reg_list, cap_list,  demand, line, xfmr,msr_mrids_demand,msr_mrids_cap,msr_mrids_reg,obj_msr_loadsw,switches,obj_msr_inv,obj_msr_node):
        
         """ Create a ``CapacitorToggler`` object
 
@@ -114,6 +114,7 @@ class SwitchingActions(object):
         self._tap_open_diff = DifferenceBuilder(simulation_id)
         self._tap_close_diff = DifferenceBuilder(simulation_id)
         self._publish_to_topic = simulation_input_topic(simulation_id)
+        self._pv_qpower = DifferenceBuilder(simulation_id)
         self.msr_mrids_loadsw = obj_msr_loadsw
         self.msr_mrids_demand = msr_mrids_demand
         self.msr_mrids_cap = msr_mrids_cap
@@ -121,6 +122,10 @@ class SwitchingActions(object):
         self.LineData = line
         self.DemandData  = demand
         self.xfmr  = xfmr
+        self.obj_msr_inv = obj_msr_inv
+        self.obj_msr_node = obj_msr_node
+        # self.Inverter_PnS = Inverter_PnS
+        # self.obj_msr_sync = obj_msr_sync
         self.TOP = []
         self.switches = switches
         self.flag = 0
@@ -162,7 +167,7 @@ class SwitchingActions(object):
             open_switch = Top.curr_top()
             # print(open_switch)
 
-            d = PowerData(self.msr_mrids_demand,message, self.xfmr,self.LineData,open_switch)
+            d = PowerData(self.msr_mrids_demand,message, self.xfmr,self.obj_msr_inv, self.LineData, open_switch,self.obj_msr_node)
             platformload = d.demand()
             print('Platform Load is obtained....')
 
@@ -179,22 +184,34 @@ class SwitchingActions(object):
                 statusP_c = no_opt.cap_()
                 statusP_r = no_opt.reg_()
                 # print('\n \n ........................')
-                # print('Platform Status')
-                # print('capacitor switch status', statusP_c)            
-                # print('regulator tap position' , statusP_r)
+                # print('Platform Status')DifferenceBuilder(simulation_id)
                 # print('........................\n \n')
 
-                # print(self.reg_list)
-                # calling VVO
-
+               
+                ###calling VVO
                 capreg_st = WSUVVO()
-                statusO_c, statusO_r = capreg_st.VVO9500(self.LineData, platformload,open_switch)
+                statusO_c, statusO_r, Qpvcontrol0, flag = capreg_st.VVO9500(self.LineData, platformload,open_switch,self.xfmr)
                 print('\n \n ........................')
                 print('Optimization results')
                 print( 'capacitor switch status', statusO_c)
                 print( 'regulator tap position', statusO_r)
                 print('........................\n \n')
-             
+
+                for inv in self.obj_msr_inv:
+                    for qpv in Qpvcontrol0:
+                        if inv['bus'] == qpv['bus']:
+                            # print(eqid)
+                            # print(mrid)
+                            qpv['mrid'] = inv['eqid']
+
+                # print(Qpvcontrol0)
+
+               
+                # for qpv_mrid in Qpvcontrol0 :
+                #     self._pv_qpower.add_difference(qpv_mrid['mrid'], "PowerElectronicsConnection.q", qpv_mrid['val'], 0)                                         
+                #     msg = self._pv_qpower.get_message()
+                #     self._gapps.send(self._publish_to_topic, json.dumps(msg))
+                #     print(msg)
 
                 # total number of control variables are 12
                 # ch = []
@@ -202,29 +219,29 @@ class SwitchingActions(object):
                 #     if statusO_c[m] == 0:
                 #         ch.append(self._cap_list[m])
 
+                if flag == 1:
+                    indx = 0
+                    for cap_mrid in self._cap_list :
+                        if statusO_c[indx] == None:
+                            # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 1)
+                            # indx += 1
+                            self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 0)
+                            indx += 1                       
+                        else:
+                            # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 1)
+                            # indx += 1
+                            self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 0)
+                            indx += 1
+                        msg = self._cap_close_diff.get_message()
+                        self._gapps.send(self._publish_to_topic, json.dumps(msg))
 
-                indx = 0
-                for cap_mrid in self._cap_list :
-                    if statusO_c[indx] == None:
-                        # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 1)
-                        # indx += 1
-                        self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusP_c[indx], 0)
-                        indx += 1                       
-                    else:
-                        # self._close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 1)
-                        # indx += 1
-                        self._cap_close_diff.add_difference(cap_mrid, "ShuntCompensator.sections", statusO_c[indx], 0)
-                        indx += 1
-                    msg = self._cap_close_diff.get_message()
-                    self._gapps.send(self._publish_to_topic, json.dumps(msg))
-
-                ind = 0
-                for reg_mrid in self.reg_list:
-                    # self._close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
-                    self._tap_close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
-                    ind += 1
-                    msg = self._tap_close_diff.get_message()
-                    self._gapps.send(self._publish_to_topic, json.dumps(msg))
+                    ind = 0
+                    for reg_mrid in self.reg_list:
+                        # self._close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
+                        self._tap_close_diff.add_difference(reg_mrid, "TapChanger.step", statusO_r[ind], 0)
+                        ind += 1
+                        msg = self._tap_close_diff.get_message()
+                        self._gapps.send(self._publish_to_topic, json.dumps(msg))
 
 
 def _main():
@@ -261,7 +278,7 @@ def _main():
     # Run queries to get model information
     print('Get Model Information..... \n')   
     query = MODEL_EQ(gapps, model_mrid, topic)
-    obj_msr_loadsw, obj_msr_demand , obj_msr_reg, obj_msr_cap = query.meas_mrids()
+    obj_msr_loadsw, obj_msr_demand , obj_msr_reg, obj_msr_cap, obj_msr_inv , obj_msr_node= query.meas_mrids()
     # print('Get Object MRIDS.... \n')
     switches = query.get_switches_mrids()
     regulator = query.get_regulators_mrids()
@@ -269,7 +286,22 @@ def _main():
     capacitor = query.get_capacitors_mrids()
     # print('capacitor is printed')
     LoadData, xfmr = query.distLoad()
-    query.Inverters()
+   
+    obj_msr_inv = obj_msr_inv['data']
+    # print(obj_msr_inv)
+    obj_msr_inv = [d for d in obj_msr_inv if d['type'] != 'PNV' and 'pv' in d['eqname']]
+    # print(obj_msr_inv[0])
+    obj_inv = query.Inverters()
+    # print(obj_inv[0])
+
+    for inv in obj_msr_inv:
+        for sinv in obj_inv:
+            if sinv['mrid'] == inv['eqid']:
+                inv['Srated'] = sinv['ratedS']
+
+
+
+
     sP = 0.
     sQ = 0.
     for l in LoadData:
@@ -284,7 +316,7 @@ def _main():
     print("Initialize..... \n")
 
 
-    toggler = SwitchingActions(opts.simulation_id, gapps, regulator, capacitor, LoadData, line,xfmr,obj_msr_demand,obj_msr_cap, obj_msr_reg,obj_msr_loadsw,switches)
+    toggler = SwitchingActions(opts.simulation_id, gapps, regulator, capacitor, LoadData, line,xfmr,obj_msr_demand,obj_msr_cap, obj_msr_reg,obj_msr_loadsw,switches,obj_msr_inv,obj_msr_node)
     print("Now subscribing")
     gapps.subscribe(listening_to_topic, toggler)
     while True:

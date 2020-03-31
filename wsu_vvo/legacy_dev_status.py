@@ -44,7 +44,10 @@ class LEGACY_DEV(object):
             if d1['measid'] in cap_loc:
                 cap_bus.append(d1['bus'])
 
+        # for k in range(len(store)):
+        #     print(cap_bus[k], store[k])
         # print(cap_bus)
+
         return store
 
     def reg_(self):
@@ -78,5 +81,9 @@ class LEGACY_DEV(object):
             if d1['measid'] in reg_loc:
                 reg_bus.append(d1['bus'])
         # print(reg_bus)
+
+        # for k in range(len(store)):
+        #     print(reg_bus[k], store[k])
+            
         return store
         
