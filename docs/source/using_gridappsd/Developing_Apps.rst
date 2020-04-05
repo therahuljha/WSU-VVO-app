@@ -18,7 +18,7 @@ Creating the application container
 
 .. code-block:: bash
 
-     gridappsd@gridappsd-VirtualBox:~/WSU-VVO-app$ docker build --network=host -t WSU-VVO .
+     gridappsd@gridappsd-VirtualBox:~/WSU-VVO-app$ docker build --network=host -t wsu-vvo .
 ..
 
 
