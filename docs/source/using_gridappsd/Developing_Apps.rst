@@ -6,19 +6,19 @@ Download the application
 
 .. code-block:: bash
 
-    gridappsd@gridappsd-VirtualBox:~$ git clone https://github.com/shpoudel/WSU-Restoration -b develop
-    gridappsd@gridappsd-VirtualBox:~$ cd WSU-Restoration
+    gridappsd@gridappsd-VirtualBox:~$ git clone https://github.com/therahuljha/WSU-VVO-app -b develop
+    gridappsd@gridappsd-VirtualBox:~$ cd WSU-VVO-app
 
 ..
 
 Creating the application container
 ------------------------------------------
 
-* From the command line execute the following commands to build the wsu-restoration container
+* From the command line execute the following commands to build the wsu-vvo container
 
 .. code-block:: bash
 
-     gridappsd@gridappsd-VirtualBox:~/WSU-Restoration$ docker build --network=host -t wsu-restoration-app .
+     gridappsd@gridappsd-VirtualBox:~/WSU-VVO-app$ docker build --network=host -t WSU-VVO .
 ..
 
 
@@ -30,8 +30,8 @@ Mount the application
 
 .. code-block:: bash
 
-    wsu_res_app:
-    image: wsu-restoration-app
+    WSU-VVO-app:
+    image: wsu-vvo
     volumes:
       - /opt/ibm/ILOG/CPLEX_Studio129/:/opt/ibm/ILOG/CPLEX_Studio129
     environment:
