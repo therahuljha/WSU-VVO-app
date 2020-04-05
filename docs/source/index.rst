@@ -1,7 +1,7 @@
 .. GridAPPS-D
 
 ==========================
-WSU-Restoration Application Documentation
+WSU-VVO Application Documentation
 ==========================
 
 .. image:: website.PNG
