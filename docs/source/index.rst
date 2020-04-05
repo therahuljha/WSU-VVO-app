@@ -4,7 +4,7 @@
 WSU-VVO Application Documentation
 ==========================
 
-.. image:: website.PNG
+.. image:: website.png
 
 .. toctree::
    :maxdepth: 2
