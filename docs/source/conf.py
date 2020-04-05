@@ -65,9 +65,9 @@ source_parsers = {
 master_doc = 'index'
 
 # General information about the project.
-project = 'WSU-Restoration'
+project = 'WSU-VVO'
 copyright = '2019-2020, Washington State University All rights reserved.'
-author = 'Shiva Poudel'
+author = 'Rahul R Jha'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
