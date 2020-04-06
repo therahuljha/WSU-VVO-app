@@ -137,8 +137,8 @@ Starting GridAPPS-D Platform
 	Registering user roles: service.pid --  pnnl.goss.gridappsd.security.rolefile
 	Registering user roles: service1 --  service
 	CREATING LOG DATA MGR MYSQL
-	{"id":"wsu_vvo","description":"WSU VVO Application app","creator":"WSU","inputs":[],"outputs":[],"options":["(simulationId)","\u0027(request)\u0027"],"execution_path":"python /usr/src/gridappsd-vvo/wsu_vvo/main.py","type":"REMOTE","launch_on_startup":false,"prereqs":["gridappsd-voltage-violation","gridappsd-alarms"],"multiple_instances":true}	
-{"heartbeatTopic":"/queue/goss.gridappsd.remoteapp.heartbeat.wsu_vvo","startControlTopic":"/topic/goss.gridappsd.remoteapp.start.wsu_vvo","stopControlTopic":"/topic/goss.gridappsd.remoteapp.stop.wsu_vvo","errorTopic":"Error","applicationId":"wsu_vvo"}
+	{"id":"wsu_vvo","description":"WSU VVO Application app","creator":"WSU","inputs":[],"outputs":[],"options":["(simulationId)","\u0027(request)\u0027"],"execution_path":"python /usr/src/gridappsd-vvo/wsu_vvo/main.py","type":"REMOTE","launch_on_startup":false,"prereqs":["gridappsd-voltage-violation","gridappsd-alarms"],"multiple_instances":true} {"heartbeatTopic":"/queue/goss.gridappsd.remoteapp.heartbeat.wsu_vvo","startControlTopic":"/topic/goss.gridappsd.remoteapp.start.wsu_vvo","stopControlTopic":"/topic/goss.gridappsd.remoteapp.stop.wsu_vvo","errorTopic":"Error","applicationId":"wsu_vvo"}	
+
 
 
 ..
