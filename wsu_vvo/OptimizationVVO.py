@@ -503,7 +503,7 @@ class WSUVVO(object):
             # taps = []
             for i in range(tap_r1):
                 if tapi1[i].varValue >= 0.9:
-                    print(i,tapi1[i].varValue)
+#                    print(i,tapi1[i].varValue)
                     tap1 = (i-17)
                     # taps.append(i-17)
                     # taps.append(i-17)
