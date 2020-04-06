@@ -34,7 +34,7 @@ Change Configurations
 |ac|
 
 
-.. |ac| image:: ac.png
+.. |ac| image:: ac.PNG
 
 * Communication outage and fault events can be added using the Test Configuration page as shown below. Event can be added using radio button or upload option.
 
