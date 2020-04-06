@@ -503,7 +503,7 @@ class MODEL_EQ(object):
             # print(p)
         # for k in range(len(regulators)):
         #     print(name[k], bus_n[k], regulators[k])
-        print("\n ...........................................")
+        # print("\n ...........................................")
         return regulators
         with open('regulators.json', 'w') as outfile:
             json.dump(regulators, outfile)
@@ -574,7 +574,7 @@ class MODEL_EQ(object):
             
         # for k in range(len(capacitors)):
         #     print(name[k], bus_n[k], capacitors[k])
-        print("\n ...........................................")
+        # print("\n ...........................................")
         return capacitors
         with open('capacitors.json', 'w') as outfile:
             json.dump(capacitors, outfile)

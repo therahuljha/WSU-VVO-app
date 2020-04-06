@@ -183,6 +183,8 @@ class SwitchingActions(object):
                 no_opt = LEGACY_DEV(self.msr_mrids_cap,self.msr_mrids_reg, message) 
                 statusP_c = no_opt.cap_()
                 statusP_r = no_opt.reg_()
+                print( 'form platform capacitor switch status', statusP_c)
+                print( 'from platform regulator tap position', statusP_r)
                 # print('\n \n ........................')
                 # print('Platform Status')DifferenceBuilder(simulation_id)
                 # print('........................\n \n')
@@ -190,19 +192,19 @@ class SwitchingActions(object):
                
                 ###calling VVO
                 capreg_st = WSUVVO()
-                statusO_c, statusO_r, Qpvcontrol0, flag = capreg_st.VVO9500(self.LineData, platformload,open_switch,self.xfmr)
+                statusO_c, statusO_r, flag = capreg_st.VVO9500(self.LineData, platformload,open_switch,self.xfmr)
                 print('\n \n ........................')
                 print('Optimization results')
                 print( 'capacitor switch status', statusO_c)
                 print( 'regulator tap position', statusO_r)
                 print('........................\n \n')
 
-                for inv in self.obj_msr_inv:
-                    for qpv in Qpvcontrol0:
-                        if inv['bus'] == qpv['bus']:
-                            # print(eqid)
-                            # print(mrid)
-                            qpv['mrid'] = inv['eqid']
+                # for inv in self.obj_msr_inv:
+                #     for qpv in Qpvcontrol0:
+                #         if inv['bus'] == qpv['bus']:
+                #             # print(eqid)
+                #             # print(mrid)
+                #             qpv['mrid'] = inv['eqid']
 
                 # print(Qpvcontrol0)
 

@@ -30,7 +30,34 @@ class PowerData(object):
         meas_value = data2['message']['measurements']     
         timestamp = data2["message"] ["timestamp"]
 
+        
         datav = datanodev['data']
+
+        sub1=[]
+        dpq = [d for d in datav if d['type'] == 'VA']
+        for d1 in dpq:
+            if  d1['eqname']=='hvmv_sub_connector':
+                eqmeasid = d1['measid']
+                if eqmeasid in meas_value:
+                    pq = meas_value[eqmeasid]
+                    sub1.append(0.001 * pq['magnitude'])
+        # print(sub1)
+
+        sub2=[]
+        dpq = [d for d in datav if d['type'] == 'VA']
+        for d1 in dpq:
+            if  d1['eqname']=='hvmv69s1s2-1':
+                eqmeasid = d1['measid']
+                if eqmeasid in meas_value:
+                    pq = meas_value[eqmeasid]
+                    sub2.append(0.001 * pq['magnitude'])
+        # print(sub2)
+        
+        # totalsubpower = [i+j for i,j in zip(sub1,sub2)]
+        # print('total power from substation........')
+        # print(totalsubpower)
+
+
         ds = [d for d in datav if d['type'] == 'PNV']
         voltage = []
         for d1 in ds:                
@@ -96,8 +123,7 @@ class PowerData(object):
         with open('pvoutput.json', 'w') as json_file:
             json.dump(pv_out, json_file)
 
-        # print(rahul)
-
+       
         for p in pv_out:
             pv_bus = p['bus']
             for d in Demand:
@@ -131,9 +157,6 @@ class PowerData(object):
         
         Demand = [l for d, l in enumerate(Demand) if d % 2 == 0]
         
-
-        
-        # print(rahul)
 
         sP = 0
         sQ = 0
