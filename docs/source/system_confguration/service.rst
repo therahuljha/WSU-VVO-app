@@ -46,7 +46,7 @@ The message in the container looks something like this:
   
 ..
 
-Restoration application container
+VVO application container
 -----------------------------------------------
 
 .. code-block:: bash
