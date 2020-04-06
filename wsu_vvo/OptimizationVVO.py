@@ -509,24 +509,24 @@ class WSUVVO(object):
                     # taps.append(i-17)
 
                 if tapi2[i].varValue >= 0.9:
-                    print(i,tapi2[i].varValue)
+                    # print(i,tapi2[i].varValue)
                     tap2 = (i-17)
                     
                     
                 if tapi3[i].varValue >= 0.9:
-                    print(i,tapi3[i].varValue)
+                    # print(i,tapi3[i].varValue)
                     tap3 = (i-17)
                                 
                 if tapi4[i].varValue >= 0.9:
-                    print(i,tapi4[i].varValue)
+                    # print(i,tapi4[i].varValue)
                     tap4 = (i-17)
                 
                 if tapi5[i].varValue >= 0.9:
-                    print(i,tapi5[i].varValue)
+                    # print(i,tapi5[i].varValue)
                     tap5 = (i-17)
                 
                 if tapi6[i].varValue >= 0.9:
-                    print(i,tapi6[i].varValue)
+                    # print(i,tapi6[i].varValue)?
                     tap6 = (i-17)
 
                 # if tapi7[i].varValue >= 0.9:
