@@ -48,7 +48,7 @@ Change Configurations
 Adding an event
 ----------------
 
-* Since we are running the VVO application, we are checking if a legacy device is not in service how the application perform. So, before proceeding, an event file is required. There are several ways to add event in the test feeder. Here, we use the upload option and use the following JSON file. 
+* For the VVO application, we are also checking if a legacy device is not in service how the application perform. So, before proceeding, an event file is required uploaded to remove a section of feeder with legacy devices. There are several ways to add event in the test feeder. Here, we use the upload option and use the following JSON file. 
 
 .. code-block:: bash
 
