@@ -48,7 +48,7 @@ Change Configurations
 Adding an event
 ----------------
 
-* Since we are running the restoration application, a fault event is required to trigger the application. Before proceeding, an event file is required. There are several ways to add event in the test feeder. Here, we use the upload option and use the following JSON file. 
+* Since we are running the VVO application, we are checking if a legacy device is not in service how the application perform. So, before proceeding, an event file is required. There are several ways to add event in the test feeder. Here, we use the upload option and use the following JSON file. 
 
 .. code-block:: bash
 
@@ -89,8 +89,7 @@ Running the platform
 
 * Click on the triangle to start the simulation. Once you get the Simulation_ID, use it to run the application in terminal. See the python command `here <https://gridappsd-restoration.readthedocs.io/en/latest/system_confguration/index.html#executing-the-application-container>`_.
 
-* Note that the WSU-Restoration application gets triggered only when the fault event is added in the test case. During normal operation, application stays quite. The occurrence of the event can be verified on the Alarm tab. Once the event has occured, the applicatin starts and runs the optimization problem to generate the candidate switches for optimal circuit reconfiguration. The candidate switches are toggled and the system is restored.
-
+*The occurrence of the event can be verified on the Alarm tab. Once the event has occured, the applicatin starts and runs the optimization problem to generate the control signals for conservation volatge reduction. 
 |viz|
 
 
