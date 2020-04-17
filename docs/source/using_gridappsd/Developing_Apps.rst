@@ -6,7 +6,7 @@ Download the application
 
 .. code-block:: bash
 
-    gridappsd@gridappsd-VirtualBox:~$ git clone https://github.com/therahuljha/WSU-VVO-app -b develop
+    gridappsd@gridappsd-VirtualBox:~$ git clone https://github.com/therahuljha/WSU-VVO-app 
     gridappsd@gridappsd-VirtualBox:~$ cd WSU-VVO-app
 
 ..
@@ -18,7 +18,7 @@ Creating the application container
 
 .. code-block:: bash
 
-     gridappsd@gridappsd-VirtualBox:~/WSU-VVO-app$ docker build --network=host -t wsu_vvo .
+     gridappsd@gridappsd-VirtualBox:~/WSU-VVO-app$ docker build --network=host -t wsu-vvo-app .
 ..
 
 
