@@ -99,9 +99,9 @@ class WSUVVO(object):
         # Minimize the power flow from feeder        
              
         prob = LpProblem("CVRSW",LpMinimize)
-        prob += Pija[0]+Pijb[0]+Pijc[0] 
+        # prob += Pija[0]+Pijb[0]+Pijc[0] 
         sub = [4, 27, 34]
-        # prob += Pija[4]+Pijb[4]+Pijc[4] + Pija[27]+Pijb[27]+Pijc[27] + Pija[34]+Pijb[34]+Pijc[34]
+        prob += Pija[4]+Pijb[4]+Pijc[4] + Pija[27]+Pijb[27]+Pijc[27] + Pija[34]+Pijb[34]+Pijc[34]
 
         # Constraints (v_i==1)
         for k in range(nNodes):
