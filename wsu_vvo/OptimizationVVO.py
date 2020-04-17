@@ -54,6 +54,7 @@ class WSUVVO(object):
         CVRQ = 1.0
         tap_r1 = 33
         loadmult = 1
+        bkva = 1000.0
             
         # Different variables for optimization function
         si = LpVariable.dicts("s_i", ((i) for i in range(nNodes) ), lowBound=0, upBound=1, cat='Binary')
@@ -65,9 +66,9 @@ class WSUVVO(object):
         Qija = LpVariable.dicts("xQa", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijb = LpVariable.dicts("xQb", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
         Qijc = LpVariable.dicts("xQc", ((i) for i in range(nEdges) ), lowBound=-bigM, upBound=bigM, cat='Continous')
-        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
-        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
-        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.96, upBound=1.1025, cat='Continous')
+        Via = LpVariable.dicts("xVa", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.1025, cat='Continous')
+        Vib = LpVariable.dicts("xVb", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.1025, cat='Continous')
+        Vic = LpVariable.dicts("xVc", ((i) for i in range(nNodes) ), lowBound=0.81, upBound=1.1025, cat='Continous')
         tapi1 = LpVariable.dicts("xtap1", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi2 = LpVariable.dicts("xtap2", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
         tapi3 = LpVariable.dicts("xtap3", ((i) for i in range(tap_r1) ), lowBound=0, upBound=1, cat='Binary')
@@ -127,11 +128,11 @@ class WSUVVO(object):
             demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'A':
-                    demandP += d['kW']
-                    demandQ += d['kVaR']
-                    demandQc += d['kVaR_C']
-                    demandPpv += d['kW_pv']
-                    demandSpv += d['kVA_pv']
+                    demandP += d['kW']/bkva
+                    demandQ += d['kVaR']/bkva
+                    demandQc += d['kVaR_C']/bkva
+                    demandPpv += d['kW_pv']/bkva
+                    demandSpv += d['kVA_pv']/bkva
             prob += lpSum(Pija[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Via[indb] == \
                     lpSum(Pija[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
             prob += lpSum(Qija[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Via[indb] == \
@@ -154,11 +155,11 @@ class WSUVVO(object):
             demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'B':
-                    demandP += d['kW']
-                    demandQ += d['kVaR']
-                    demandQc += d['kVaR_C']
-                    demandPpv += d['kW_pv']
-                    demandSpv += d['kVA_pv']
+                    demandP += d['kW']/bkva
+                    demandQ += d['kVaR']/bkva
+                    demandQc += d['kVaR_C']/bkva
+                    demandPpv += d['kW_pv']/bkva
+                    demandSpv += d['kVA_pv']/bkva
             prob += lpSum(Pijb[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Vib[indb] == \
                     lpSum(Pijb[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
             prob += lpSum(Qijb[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vib[indb] == \
@@ -181,11 +182,11 @@ class WSUVVO(object):
             demandSpv = 0.
             for d in LoadData:
                 if node == d['bus'] and d['Phase'] == 'C':
-                    demandP += d['kW']
-                    demandQ += d['kVaR']
-                    demandQc += d['kVaR_C']
-                    demandPpv += d['kW_pv']
-                    demandSpv += d['kVA_pv']
+                    demandP += d['kW']/bkva
+                    demandQ += d['kVaR']/bkva
+                    demandQc += d['kVaR_C']/bkva
+                    demandPpv += d['kW_pv']/bkva
+                    demandSpv += d['kVA_pv']/bkva
             prob += lpSum(Pijc[pa[j]] for j in N) - loadmult*(demandP)*(CVRP/2)*Vic[indb] == \
                     lpSum(Pijc[ch[j]] for j in M) + loadmult*(demandP)*(1-CVRP/2) + demandPpv
             prob += lpSum(Qijc[pa[j]] for j in N) - loadmult*(demandQ)*(CVRQ/2)*Vic[indb] == \
@@ -329,9 +330,12 @@ class WSUVVO(object):
                 (x_cb+np.sqrt(3)*r_cb)*length/(unit*base_Z*1)*Qijb[k] == 0
         
         # Initialize source bus at 1.05 p.u. V^2 = 1.1025
-        prob += Via[0] == 1.1025
-        prob += Vib[0] == 1.1025
-        prob += Vic[0] == 1.1025
+        # prob += Via[0] == 1.1025
+        # prob += Vib[0] == 1.1025
+        # prob += Vic[0] == 1.1025
+        prob += Via[0] == 1.0
+        prob += Vib[0] == 1.0
+        prob += Vic[0] == 1.0
 
 
         # No reverse real power flow in substation
@@ -466,234 +470,270 @@ class WSUVVO(object):
         print ('Solving the VVO problem..........')
         # Call solver 
         # prob.solve()
-        # try:
+        print("using Pulp solver")
+        prob.solve(pulp.PULP_CBC_CMD(msg=True))
+            # prob.solve()
+        prob.writeLP("Check.lp")
+
+
+        # print("using Cplex solver")
         # prob.solve(CPLEX(msg=1))
-        try:
-            # prob.solve(CPLEX_CMD(msg=1,options=['set mip tolerances mipgap 0.05']))
-            # prob.writeLP("Check.lp")
-            # print ("Status:", LpStatus[prob.status])
-            print("using Pulp solver")
-            prob.solve(pulp.PULP_CBC_CMD(msg=True))
-                # prob.solve()
-            prob.writeLP("Check.lp")
-                # print ("Status:", LpStatus[prob.status])
-            # print("using Cplex solver")
-            # prob.solve(CPLEX(msg=1))
-            # prob.writeLP("Check.lp")
-            # print ("Status:", LpStatus[prob.status])
+        # print ("Status:", LpStatus[prob.status])
+
+        for i in range(tap_r1):
+            if tapi1[i].varValue >= 0.9:
+                tap1 = (i-17)
+
+            if tapi2[i].varValue >= 0.9:
+                tap2 = (i-17)
+            
+            if tapi3[i].varValue >= 0.9:
+                tap3 = (i-17)
                         
-        except:
-            try:
-                print("using Pulp solver")
-                prob.solve(pulp.PULP_CBC_CMD(msg=True))
-                # prob.solve()
-                prob.writeLP("Check.lp")
-                print ("Status:", LpStatus[prob.status])
-            except:
-                print("Solution not found")
+            if tapi4[i].varValue >= 0.9:
+                tap4 = (i-17)
         
-        try:
-            
-            # status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
-            #     swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
-            
-            # print(status_c)
-            # print('\n .........................')
-            
-            # taps = []
-            for i in range(tap_r1):
-                if tapi1[i].varValue >= 0.9:
-#                    print(i,tapi1[i].varValue)
-                    tap1 = (i-17)
-                    # taps.append(i-17)
-                    # taps.append(i-17)
+            if tapi5[i].varValue >= 0.9:
+                tap5 = (i-17)
+        
+            if tapi6[i].varValue >= 0.9:
+                tap6 = (i-17)
 
-                if tapi2[i].varValue >= 0.9:
-                    # print(i,tapi2[i].varValue)
-                    tap2 = (i-17)
+        status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+        swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
+
+        status_r = [tap5, tap5, tap3,tap1, tap3, tap6, tap2, tap2, tap2, tap5, tap3, tap1, tap6, tap4, tap4, tap4, tap1, tap6]
+
+        flag = 1
+        # return status_c, status_r, Qpvcontrol, flag
+        return status_c, status_r, flag
+            
+#         try:
+#             # prob.solve(CPLEX_CMD(msg=1,options=['set mip tolerances mipgap 0.05']))
+#             # prob.writeLP("Check.lp")
+#             # print ("Status:", LpStatus[prob.status])
+#             print("using Pulp solver")
+#             prob.solve(pulp.PULP_CBC_CMD(msg=True))
+#                 # prob.solve()
+#             prob.writeLP("Check.lp")
+#                 # print ("Status:", LpStatus[prob.status])
+#             # print("using Cplex solver")
+#             # prob.solve(CPLEX(msg=1))
+#             # prob.writeLP("Check.lp")
+#             # print ("Status:", LpStatus[prob.status])
+                        
+#         except:
+#             try:
+#                 print("using Pulp solver")
+#                 prob.solve(pulp.PULP_CBC_CMD(msg=True))
+#                 # prob.solve()
+#                 prob.writeLP("Check.lp")
+#                 print ("Status:", LpStatus[prob.status])
+#             except:
+#                 print("Solution not found")
+        
+#         try:
+            
+#             # status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+#             #     swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
+            
+#             # print(status_c)
+#             # print('\n .........................')
+            
+#             # taps = []
+#             for i in range(tap_r1):
+#                 if tapi1[i].varValue >= 0.9:
+# #                    print(i,tapi1[i].varValue)
+#                     tap1 = (i-17)
+#                     # taps.append(i-17)
+#                     # taps.append(i-17)
+
+#                 if tapi2[i].varValue >= 0.9:
+#                     # print(i,tapi2[i].varValue)
+#                     tap2 = (i-17)
                     
                     
-                if tapi3[i].varValue >= 0.9:
-                    # print(i,tapi3[i].varValue)
-                    tap3 = (i-17)
+#                 if tapi3[i].varValue >= 0.9:
+#                     # print(i,tapi3[i].varValue)
+#                     tap3 = (i-17)
                                 
-                if tapi4[i].varValue >= 0.9:
-                    # print(i,tapi4[i].varValue)
-                    tap4 = (i-17)
+#                 if tapi4[i].varValue >= 0.9:
+#                     # print(i,tapi4[i].varValue)
+#                     tap4 = (i-17)
                 
-                if tapi5[i].varValue >= 0.9:
-                    # print(i,tapi5[i].varValue)
-                    tap5 = (i-17)
+#                 if tapi5[i].varValue >= 0.9:
+#                     # print(i,tapi5[i].varValue)
+#                     tap5 = (i-17)
                 
-                if tapi6[i].varValue >= 0.9:
-                    # print(i,tapi6[i].varValue)?
-                    tap6 = (i-17)
+#                 if tapi6[i].varValue >= 0.9:
+#                     # print(i,tapi6[i].varValue)?
+#                     tap6 = (i-17)
 
-                # if tapi7[i].varValue >= 0.9:
-                #     tap7 = (i-17)
+#                 # if tapi7[i].varValue >= 0.9:
+#                 #     tap7 = (i-17)
             
-                # if tapi8[i].varValue >= 0.9:
-                #     tap8 = (i-17)
+#                 # if tapi8[i].varValue >= 0.9:
+#                 #     tap8 = (i-17)
 
-                # if tapi9[i].varValue >= 0.9:
-                #     tap9 = (i-17)
-                # # print(tapi10)
-                # if tapi10[i].varValue >= 0.9:
-                #     tap10 = (i-17)
+#                 # if tapi9[i].varValue >= 0.9:
+#                 #     tap9 = (i-17)
+#                 # # print(tapi10)
+#                 # if tapi10[i].varValue >= 0.9:
+#                 #     tap10 = (i-17)
 
-                # if tapi11[i].varValue >= 0.9:
-                #     tap11 = (i-17)
+#                 # if tapi11[i].varValue >= 0.9:
+#                 #     tap11 = (i-17)
 
-                # if tapi12[i].varValue >= 0.9:
-                #     tap12 = (i-17)
+#                 # if tapi12[i].varValue >= 0.9:
+#                 #     tap12 = (i-17)
 
-                # if tapi13[i].varValue >= 0.9:
-                #     tap13 = (i-17)
+#                 # if tapi13[i].varValue >= 0.9:
+#                 #     tap13 = (i-17)
 
-                # if tapi14[i].varValue >= 0.9:
-                #     tap14 = (i-17)
+#                 # if tapi14[i].varValue >= 0.9:
+#                 #     tap14 = (i-17)
 
-                # if tapi15[i].varValue >= 0.9:
-                #     tap15 = (i-17)
+#                 # if tapi15[i].varValue >= 0.9:
+#                 #     tap15 = (i-17)
 
-                # if tapi16[i].varValue >= 0.9:
-                #     tap16 = (i-17)
+#                 # if tapi16[i].varValue >= 0.9:
+#                 #     tap16 = (i-17)
 
-                # if tapi17[i].varValue >= 0.9:
-                #     tap17 = (i-17)
+#                 # if tapi17[i].varValue >= 0.9:
+#                 #     tap17 = (i-17)
 
-                # if tapi18[i].varValue >= 0.9:
-                #     tap18 = (i-17)
+#                 # if tapi18[i].varValue >= 0.9:
+#                 #     tap18 = (i-17)
 
 
-            # Qpvcontrol = []
-            # for i in range(nNodes):
-            #     demandPpv = 0.
-            #     demandSpv = 0.            
-            #     for l in LoadData:
-            #         if l['bus'] == Nodes[i]:
-            #             demandPpv += d['kW_pv']
-            #             demandSpv += d['kVA_pv']
-            #             break
+#             # Qpvcontrol = []
+#             # for i in range(nNodes):
+#             #     demandPpv = 0.
+#             #     demandSpv = 0.            
+#             #     for l in LoadData:
+#             #         if l['bus'] == Nodes[i]:
+#             #             demandPpv += d['kW_pv']
+#             #             demandSpv += d['kVA_pv']
+#             #             break
 
-            #     if QPVa[i].varValue != None:
-            #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
-            #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue)
-            #         # store = [value, l['bus']]
-            #         message = dict(bus = l['bus'],
-            #                         mrid = 'abc',
-            #                         val = value)
-            #         # print(store)
-            #         Qpvcontrol.append(message)
+#             #     if QPVa[i].varValue != None:
+#             #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
+#             #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue)
+#             #         # store = [value, l['bus']]
+#             #         message = dict(bus = l['bus'],
+#             #                         mrid = 'abc',
+#             #                         val = value)
+#             #         # print(store)
+#             #         Qpvcontrol.append(message)
 
-            #     if QPVb[i].varValue != None:
-            #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue))
-            #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue)
-            #         message = dict(bus = l['bus'],
-            #                         mrid = 'abc',
-            #                         val = value)
-            #         Qpvcontrol.append(message)
+#             #     if QPVb[i].varValue != None:
+#             #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue))
+#             #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVb[i].varValue)
+#             #         message = dict(bus = l['bus'],
+#             #                         mrid = 'abc',
+#             #                         val = value)
+#             #         Qpvcontrol.append(message)
 
-            #     if QPVc[i].varValue != None:
-            #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
-            #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVc[i].varValue)
-            #         message = dict(bus = l['bus'],
-            #                         mrid = 'abc',
-            #                         val = value)
-            #         Qpvcontrol.append(message)
+#             #     if QPVc[i].varValue != None:
+#             #         # print((np.sqrt(demandSpv**2 - demandPpv**2))*(QPVa[i].varValue))
+#             #         value = (np.sqrt(demandSpv**2 - demandPpv**2))*(QPVc[i].varValue)
+#             #         message = dict(bus = l['bus'],
+#             #                         mrid = 'abc',
+#             #                         val = value)
+#             #         Qpvcontrol.append(message)
 
-            # for ld in Qpvcontrol:
-            #     node = ld['bus']
-            #     # print(node)
-            #     # Find this node in Xfrm primary
-            #     for tr in xmfr:
-            #         pri = tr['bus1']
-            #         # print(pri)
-            #         seci = tr['bus2']
-            #         # print(pseci)
-            #         if pri == node.lower():
-            #             ld['bus'] = 's'+tr['bus2']                    # Transfer this Qcontrol to secondary and change the node name
+#             # for ld in Qpvcontrol:
+#             #     node = ld['bus']
+#             #     # print(node)
+#             #     # Find this node in Xfrm primary
+#             #     for tr in xmfr:
+#             #         pri = tr['bus1']
+#             #         # print(pri)
+#             #         seci = tr['bus2']
+#             #         # print(pseci)
+#             #         if pri == node.lower():
+#             #             ld['bus'] = 's'+tr['bus2']                    # Transfer this Qcontrol to secondary and change the node name
                         
                 
-            # status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
-            #       swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
+#             # status_c = [swia[1841].varValue,swib[1841].varValue,swic[1841].varValue, swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+#             #       swia[36].varValue,swib[36].varValue,swic[36].varValue, swia[513].varValue,swib[513].varValue,swic[513].varValue]
 
-            # status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
-            #       swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
+#             # status_c = [swia[36].varValue,swib[36].varValue,swic[36].varValue,swia[624].varValue,swib[624].varValue,swic[624].varValue,\
+#             #       swia[1841].varValue,swib[1841].varValue,swic[1841].varValue,swia[513].varValue,swib[513].varValue,swic[513].varValue]
 
-            # status_r = [tap1, tap2, tap3, tap4, tap5, tap6, tap7, tap8, tap9, tap10, tap11, tap12, tap13, tap14, tap15, tap16, tap17, tap18]
-            status_r = [tap1, tap1, tap1, tap2, tap2, tap2, tap3, tap3, tap3, tap4, tap4, tap4, tap5, tap5, tap5, tap6, tap6, tap6]
-            # status_r = [tap15, tap12, tap13,tap2, tap1, tap11, tap4, tap8, tap5, tap14, tap18, tap17, tap3, tap10, tap9, tap7, tap16, tap6]
-            if swia[1841].varValue >0.5:
-                cap1 =1
-            else:
-                cap1=0
+#             # status_r = [tap1, tap2, tap3, tap4, tap5, tap6, tap7, tap8, tap9, tap10, tap11, tap12, tap13, tap14, tap15, tap16, tap17, tap18]
+#             # status_r = [tap1, tap1, tap1, tap2, tap2, tap2, tap3, tap3, tap3, tap4, tap4, tap4, tap5, tap5, tap5, tap6, tap6, tap6]
+#             status_r = [tap5, tap5, tap3,tap1, tap3, tap6, tap2, tap2, tap2, tap5, tap3, tap1, tap6, tap4, tap4, tap4, tap1, tap6]
+#             # if swia[1841].varValue >0.5:
+#             #     cap1 =1
+#             # else:
+#             #     cap1=0
              
-            if swib[1841].varValue >0.5:
-                cap2 =1
-            else:
-                cap2=0
+#             # if swib[1841].varValue >0.5:
+#             #     cap2 =1
+#             # else:
+#             #     cap2=0
 
-            if swic[1841].varValue >0.5:
-                cap3 =1
-            else:
-                cap3=0
+#             # if swic[1841].varValue >0.5:
+#             #     cap3 =1
+#             # else:
+#             #     cap3=0
 
-            if swia[624].varValue >0.5:
-                cap4 =1
-            else:
-                cap4=0
+#             # if swia[624].varValue >0.5:
+#             #     cap4 =1
+#             # else:
+#             #     cap4=0
 
-            if swib[624].varValue >0.5:
-                cap5 =1
-            else:
-                cap5=0
+#             # if swib[624].varValue >0.5:
+#             #     cap5 =1
+#             # else:
+#             #     cap5=0
 
-            if swic[624].varValue >0.5:
-                cap6 =1
-            else:
-                cap6=0
+#             # if swic[624].varValue >0.5:
+#             #     cap6 =1
+#             # else:
+#             #     cap6=0
 
-            if swia[36].varValue >0.5:
-                cap7 =1
-            else:
-                cap7 =0
+#             # if swia[36].varValue >0.5:
+#             #     cap7 =1
+#             # else:
+#             #     cap7 =0
 
-            if swib[36].varValue >0.5:
-                cap8 =1
-            else:
-                cap8=0
+#             # if swib[36].varValue >0.5:
+#             #     cap8 =1
+#             # else:
+#             #     cap8=0
 
-            if swic[36].varValue >0.5:
-                cap9 =1
-            else:
-                cap9=0
+#             # if swic[36].varValue >0.5:
+#             #     cap9 =1
+#             # else:
+#             #     cap9=0
 
-            if swia[513].varValue >0.5:
-                cap10 =1
-            else:
-                cap10=0
+#             # if swia[513].varValue >0.5:
+#             #     cap10 =1
+#             # else:
+#             #     cap10=0
 
-            if swib[513].varValue >0.5:
-                cap11 =1
-            else:
-                cap11=0
+#             # if swib[513].varValue >0.5:
+#             #     cap11 =1
+#             # else:
+#             #     cap11=0
                 
-            if swic[513].varValue >0.5:
-                cap12 =1
-            else:
-                cap12=0
+#             # if swic[513].varValue >0.5:
+#             #     cap12 =1
+#             # else:
+#             #     cap12=0
 
-            status_c = [cap1,cap2,cap3, cap4, cap5,cap6,cap7,cap8,cap9, cap10,cap11,cap12]
+#             status_c = [cap1,cap2,cap3, cap4, cap5,cap6,cap7,cap8,cap9, cap10,cap11,cap12]
             # print(status_r)
 
-            flag = 1
-            # return status_c, status_r, Qpvcontrol, flag
-            return status_c, status_r, flag
-        except:
-            status_c = []
-            status_r = []
-            flag = 0
-            # Qpvcontrol = []
-            # return status_c, status_r, Qpvcontrol, flag
-            return status_c, status_r, flag
+        #     flag = 1
+        #     # return status_c, status_r, Qpvcontrol, flag
+        #     return status_c, status_r, flag
+        # except:
+        #     status_c = []
+        #     status_r = []
+        #     flag = 0
+        #     # Qpvcontrol = []
+        #     # return status_c, status_r, Qpvcontrol, flag
+        #     return status_c, status_r, flag
